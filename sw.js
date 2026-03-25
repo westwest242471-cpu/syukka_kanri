@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ship-calc-cache-v1.9';
+const CACHE_NAME = 'ship-calc-cache-v18.9';
 const urlsToCache = [
   './',
   './index.html',
