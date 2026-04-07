@@ -206,7 +206,16 @@ function startItemWizard() {
             }
         });
     }
-
+　　// この関数をスクリプト内の適当な場所（editBaseRateの次など）に追加
+function editItemName(id) {
+    openModal(`${jobs[id].name} の名前変更`, "text", jobs[id].name, (newName) => {
+        if (newName && newName.trim() !== "") {
+            jobs[id].name = newName;
+            save();
+            refreshAll();
+        }
+    });
+}
     function finalizeAdd(job) { const id = 'JOB_' + Date.now(); jobs[id] = job; save(); refreshAll(); }
     function startJob(id) {
         const total = jobs[id].centerConfigs.reduce((s, c) => s + c.count, 0);
@@ -314,7 +323,7 @@ function startItemWizard() {
         const job = jobs[id]; const lastLog = job.logs[job.logs.length-1];
         const html = `<div class="card ${job.isOpen ? 'open' : ''}" id="${id}">
             <div class="card-header" onclick="toggleCard(event, '${id}')">
-                <div><span class="item-name">${job.name}</span><span class="base-rate-tag" onclick="event.stopPropagation(); editBaseRate('${id}')">基準: ${job.baseRate}/h</span></div>
+                <div><span class="item-name" onclick="event.stopPropagation(); editItemName('${id}')">${job.name}</span><span class="base-rate-tag" onclick="event.stopPropagation(); editBaseRate('${id}')">基準: ${job.baseRate}/h</span></div>
                 <span style="font-weight:bold; font-size:10px;">${job.started && lastLog ? '残:'+lastLog.rem : '<span style="color:red">未開始</span>'} ▼</span>
             </div>
             <div class="card-content">
