@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>出荷管理 v18.6</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <style>
+        :root { --danger: #dc3545; --success: #28a745; --blue: #007bff; --orange: #e67e22; --purple: #6f42c1; --dark: #333; }
+        body { font-family: sans-serif; margin: 1px; background-color: #f0f0f0; font-size: 10px; line-height: 1.0; display: flex; flex-direction: column; min-height: 100vh; }
+        #pwaInstallBanner { display: none; background: var(--blue); color: white; padding: 12px; text-align: center; font-weight: bold; font-size: 13px; cursor: pointer; border-bottom: 2px solid #fff; }
+        #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 20px; }
+        .modal-content { background: white; width: 90%; max-width: 300px; padding: 10px; border-radius: 6px; }
+        .modal-title { font-weight: bold; margin-bottom: 5px; color: var(--blue); font-size: 12px; text-align: center; }
+        .modal-input { width: 100%; padding: 8px; font-size: 16px; border: 2px solid var(--blue); border-radius: 4px; box-sizing: border-box; margin-bottom: 8px; }
+        .modal-btns { display: flex; gap: 4px; }
+        .modal-btns button { flex: 1; padding: 8px; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .mode-selector { display: flex; background: #eee; padding: 2px; gap: 2px; margin-bottom: 3px; border-radius: 3px; }
+        .mode-btn { flex: 1; padding: 5px; border: none; border-radius: 2px; font-weight: bold; background: #ddd; color: #666; font-size: 11px; }
+        .mode-btn.active { background: var(--blue); color: white; }
+        .test-banner { background: #ff4757; color: white; padding: 2px; text-align: center; font-weight: bold; font-size: 9px; display: none; }
+        .card { background: white; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 4px; border-left: 3px solid var(--blue); }
+        .card-header { padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fdfdfd; }
+        .item-name { font-size: 13px; font-weight: bold; color: var(--blue); text-decoration: underline; }
+        .base-rate-tag { font-size: 9px; color: #666; background: #eee; padding: 1px 4px; border-radius: 3px; margin-left: 5px; cursor: pointer; text-decoration: underline; }
+        .card-content { display: none; padding: 4px; border-top: 1px solid #eee; }
+        .card.open .card-content { display: block; }
+        .status-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 4px; }
+        .status-table th { background: #f4f4f4; font-size: 7px; padding: 2px 1px; border: 1px solid #ddd; }
+        .status-table td { border: 1px solid #ddd; padding: 2px 1px; text-align: center; font-size: 10px; }
+        .finished { background: #e8f5e9 !important; color: #aaa !important; }
+        .main-controls { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; margin: 4px 0; }
+        .prod-input { width: 100%; border: 1.5px solid var(--blue); border-radius: 3px; font-size: 14px; font-weight: bold; text-align: center; box-sizing: border-box; height: 30px; }
+        .btn-rec { background: var(--success); color: white; border: none; border-radius: 3px; font-weight: bold; height: 30px; font-size: 11px; }
+        .info-box { background: #fff9db; border: 1px solid #fab005; border-radius: 3px; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 30px; }
+        .btn-support { background: var(--purple); color: white; width: 100%; padding: 6px; border: none; border-radius: 3px; font-weight: bold; margin-bottom: 4px; font-size: 10px; }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 4px; }
+        .log-table th { background: #f4f4f4; border: 1px solid #ddd; padding: 1px; }
+        .log-table td { border: 1px solid #ddd; padding: 2px; text-align: center; }
+        .editable { color: var(--blue); text-decoration: underline; }
+        .btn-del-job { width:100%; background:none; border:none; color:#ccc; font-size:9px; margin-top:5px; padding: 5px; }
+        
+        /* デベロッパー表記用スタイル */
+        footer { margin-top: auto; padding: 15px 5px; text-align: center; color: #bbb; font-size: 8px; }
+    </style>
+</head>
+<body>
+
+<div id="pwaInstallBanner">📲 ホーム画面に追加してオフラインで使う</div>
+
+<div id="customModal">
+    <div class="modal-content">
+        <div id="modalTitle" class="modal-title"></div>
+        <input type="text" id="modalInput" class="modal-input" autocomplete="off">
+        <div class="modal-btns" id="modalBtnsNormal">
+            <button id="modalCancel" style="background:#ccc;">閉じる</button>
+            <button id="modalOk" style="background:var(--blue); color:white;">決定</button>
+        </div>
+        <div class="modal-btns" id="modalBtnsConfirm" style="display:none;">
+            <button id="confirmNo" style="background:#ccc;">未開始</button>
+            <button id="confirmYes" style="background:var(--success); color:white;">開始済み</button>
+        </div>
+    </div>
+</div>
+
+<div id="testBanner" class="test-banner"></div>
+
+<div style="background: var(--dark); color: white; padding: 4px; display: flex; justify-content: space-between; align-items: center;">
+    <span style="font-weight:bold; font-size: 11px;">出荷管理 v18.6</span>
+    <div>
+        <label style="font-size: 8px; cursor: pointer; background: #555; padding: 1px 4px; border-radius: 2px; margin-right: 4px;">
+            <input type="checkbox" id="testModeToggle" onchange="toggleTestMode()"> テスト
+        </label>
+        <button onclick="resetAll()" style="font-size: 8px; background: var(--danger); color: white; border: none; padding: 1px 4px;">全消去</button>
+    </div>
+</div>
+
+<div class="mode-selector">
+    <button id="btn-N" class="mode-btn" onclick="changeBinMode('N')">N便</button>
+    <button id="btn-Y" class="mode-btn" onclick="changeBinMode('Y')">Y便</button>
+    <button id="btn-F" class="mode-btn" onclick="changeBinMode('F')">F便</button>
+</div>
+
+<button onclick="startItemWizard()" style="width:100%; padding:8px; background:var(--blue); color:white; border:none; border-radius:3px; font-weight:bold; margin-bottom:4px; font-size: 12px;">＋ 新規登録</button>
+<div id="jobContainer"></div>
+
+<footer>
+    Developer: 1F加工西 | App Version: 18.9 (Stable)
+</footer>
+
+<script>
+    /* PWA インストール制御 */
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault(); deferredPrompt = e;
+        document.getElementById('pwaInstallBanner').style.display = 'block';
+    });
+    document.getElementById('pwaInstallBanner').onclick = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') document.getElementById('pwaInstallBanner').style.display = 'none';
+        deferredPrompt = null;
+    };
+
+    /* SW登録 */
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err));
+        });
+    }
+
+    const BIN_CONFIGS = {
+        'N': { start: "21:00", limits: { "立川":"04:00", "川口":"04:20", "練馬":"05:00", "朝霞":"06:00" } },
+        'Y': { start: "08:00", limits: { "立川":"10:50", "川口":"11:00", "練馬":"12:20", "朝霞":"13:00" } },
+        'F': { start: "12:00", limits: { "立川":"17:00", "川口":"17:30", "練馬":"18:20", "朝霞":"19:00" } }
+    };
+
+    let currentBin = localStorage.getItem('ship_v18_bin') || 'N';
+    let jobs = JSON.parse(localStorage.getItem(`ship_v18_data_${currentBin}`)) || {};
+    let timeOffset = Number(localStorage.getItem('ship_v18_offset')) || 0;
+
+    function getNow() { return new Date(Date.now() + timeOffset); }
+
+    let modalCallback = null;
+    function openModal(title, type, defVal, callback, isConfirm = false) {
+        document.getElementById('modalTitle').innerText = title;
+        const input = document.getElementById('modalInput');
+        input.type = type; input.value = defVal;
+        input.style.display = isConfirm ? 'none' : 'block';
+        document.getElementById('modalBtnsNormal').style.display = isConfirm ? 'none' : 'flex';
+        document.getElementById('modalBtnsConfirm').style.display = isConfirm ? 'flex' : 'none';
+        document.getElementById('customModal').style.display = 'flex';
+        modalCallback = callback;
+        if(!isConfirm) setTimeout(() => { input.focus(); if(type==='number') input.select(); }, 100);
+    }
+    document.getElementById('modalOk').onclick = () => {
+        const val = document.getElementById('modalInput').value;
+        document.getElementById('customModal').style.display = 'none';
+        if (modalCallback) modalCallback(val);
+    };
+    document.getElementById('modalCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; };
+    document.getElementById('confirmYes').onclick = () => { document.getElementById('customModal').style.display = 'none'; if (modalCallback) modalCallback(true); };
+    document.getElementById('confirmNo').onclick = () => { document.getElementById('customModal').style.display = 'none'; if (modalCallback) modalCallback(false); };
+    document.getElementById('modalInput').onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('modalOk').click(); };
+
+    function changeBinMode(mode) {
+        currentBin = mode;
+        localStorage.setItem('ship_v18_bin', mode);
+        jobs = JSON.parse(localStorage.getItem(`ship_v18_data_${mode}`)) || {};
+        if (document.getElementById('testModeToggle').checked) toggleTestMode(); 
+        updateUI();
+    }
+
+    function startItemWizard() {
+        openModal("アイテム名", "text", "", (name) => {
+            if (!name) return;
+            openModal(`基準生産性`, "number", "", (rate) => {
+                let job = { name, baseRate: Number(rate)||0, centerConfigs: [], started: false, logs: [], isOpen: true };
+                const binLimits = BIN_CONFIGS[currentBin].limits;
+                const centerNames = Object.keys(binLimits);
+                let cIdx = 0;
+                function nextC() {
+                    if (cIdx < centerNames.length) {
+                        const cName = centerNames[cIdx];
+                        openModal(`${cName} 設定数`, "number", "", (num) => {
+                            let count = Number(num)||0;
+                            if (currentBin === 'N' && cName === '朝霞' && count > 0) {
+                                let fastCount = Math.ceil(count / 2);
+                                let normalCount = count - fastCount;
+                                if(fastCount > 0) job.centerConfigs.push({ name: "朝霞(早)", limit: "05:30", count: fastCount });
+                                if(normalCount > 0) job.centerConfigs.push({ name: "朝霞", limit: "06:00", count: normalCount });
+                            } else {
+                                job.centerConfigs.push({ name: cName, limit: binLimits[cName], count: count });
+                            }
+                            cIdx++; nextC();
+                        });
+                    } else {
+                        openModal("開始済み？", "text", "", (started) => {
+                            if (started === true) {
+                                const total = job.centerConfigs.reduce((s, c) => s + c.count, 0);
+                                openModal("現在の残数", "number", total, (rem) => {
+                                    job.started = true; job.logs.push({ rem: Number(rem), ts: getNow().getTime() });
+                                    finalizeAdd(job);
+                                });
+                            } else { finalizeAdd(job); }
+                        }, true);
+                    }
+                }
+                nextC();
+            });
+        });
+    }
+
+    function editBaseRate(id) {
+        openModal(`${jobs[id].name} の基準生産性`, "number", jobs[id].baseRate, (rate) => {
+            if(rate !== "" && rate !== null) {
+                jobs[id].baseRate = Number(rate);
+                save(); refreshAll();
+            }
+        });
+    }
+
+    function finalizeAdd(job) { const id = 'JOB_' + Date.now(); jobs[id] = job; save(); refreshAll(); }
+    function startJob(id) {
+        const total = jobs[id].centerConfigs.reduce((s, c) => s + c.count, 0);
+        openModal("現在の残数", "number", total, (rem) => {
+            if(rem === null || rem === "") return;
+            jobs[id].started = true; jobs[id].logs = [{ rem: Number(rem), ts: getNow().getTime() }];
+            save(); refreshAll();
+        });
+    }
+    function addSupportCenter(id) {
+        openModal("応援先", "text", "", (name) => {
+            if (!name) return;
+            openModal(`門限`, "text", "12:00", (limit) => {
+                if (!limit) return;
+                openModal(`設定数`, "number", "", (count) => {
+                    jobs[id].centerConfigs.push({ name, limit, count: Number(count)||0, isSupport: true });
+                    jobs[id].centerConfigs.sort((a, b) => a.limit.localeCompare(b.limit));
+                    save(); refreshAll();
+                });
+            });
+        });
+    }
+    function editLog(id, logIdx, field) {
+        const log = jobs[id].logs[logIdx];
+        if (field === 'rem') {
+            openModal("修正残数", "number", log.rem, (v) => { if(v!=="") { jobs[id].logs[logIdx].rem = Number(v); save(); refreshAll(); } });
+        } else if (field === 'ts') {
+            const d = new Date(log.ts);
+            openModal("修正時刻", "text", `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`, (v) => {
+                if(v) { 
+                    const [h, m] = v.split(':').map(Number); 
+                    const newTs = new Date(log.ts).setHours(h, m, 0, 0);
+                    jobs[id].logs[logIdx].ts = newTs; 
+                    jobs[id].logs.sort((a, b) => a.ts - b.ts); 
+                    save(); refreshAll(); 
+                }
+            });
+        }
+    }
+    function save() { localStorage.setItem(`ship_v18_data_${currentBin}`, JSON.stringify(jobs)); }
+    function fmtTime(ts) { const d = new Date(ts); return d.getHours() + ":" + d.getMinutes().toString().padStart(2, '0'); }
+    function toggleTestMode() {
+        if (document.getElementById('testModeToggle').checked) {
+            const realNow = new Date(); const target = new Date();
+            const [h, m] = BIN_CONFIGS[currentBin].start.split(':').map(Number);
+            target.setHours(h, m, 0, 0);
+            if (h >= 18 && realNow.getHours() < 12) target.setDate(target.getDate() - 1);
+            timeOffset = target.getTime() - realNow.getTime();
+        } else { timeOffset = 0; }
+        localStorage.setItem('ship_v18_offset', timeOffset);
+        updateTestUI(); refreshAll();
+    }
+    function updateTestUI() {
+        const isTest = timeOffset !== 0;
+        document.getElementById('testModeToggle').checked = isTest;
+        const banner = document.getElementById('testBanner');
+        banner.style.display = isTest ? 'block' : 'none';
+        banner.innerText = `【TEST】${currentBin}便(${BIN_CONFIGS[currentBin].start})`;
+    }
+    function getLimitDate(limitStr) {
+        const now = getNow(); const [h, m] = limitStr.split(':').map(Number);
+        let d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+        if (currentBin === 'N') {
+            if (now.getHours() >= 12 && h < 12) d.setDate(d.getDate() + 1);
+            else if (now.getHours() < 12 && h >= 12) d.setDate(d.getDate() - 1);
+        }
+        return d;
+    }
+    function updateUI() {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`btn-${currentBin}`).classList.add('active');
+        updateTestUI(); refreshAll();
+    }
+    function refreshTable(id) {
+        const job = jobs[id]; const tbody = document.getElementById(id + '-body'); if (!tbody) return;
+        tbody.innerHTML = "";
+        const nowTs = getNow().getTime();
+        const lastLog = job.logs[job.logs.length-1];
+        const startLog = job.logs[0];
+        let avgRate = (startLog && lastLog && lastLog.ts > startLog.ts) ? (startLog.rem - lastLog.rem) / ((lastLog.ts - startLog.ts) / 3600000) : 0;
+        let cumulativeTarget = 0;
+        const totalProcessed = lastLog ? (job.centerConfigs.reduce((s,c)=>s+c.count,0) - lastLog.rem) : 0;
+        for (let c of job.centerConfigs) {
+            if (c.count === 0) continue;
+            cumulativeTarget += c.count;
+            const limitDate = getLimitDate(c.limit);
+            const needed = Math.max(0, cumulativeTarget - totalProcessed);
+            const isFinished = job.started && needed <= 0;
+            const hrsLeft = (limitDate.getTime() - nowTs) / 3600000;
+            let reqRate = (job.started && !isFinished) ? (hrsLeft > 0 ? Math.ceil(needed / hrsLeft) : "OVER") : "--";
+            let eta = "--:--", isNg = false;
+            if (avgRate > 0 && !isFinished && lastLog) {
+                const fTs = lastLog.ts + (needed / avgRate) * 3600000;
+                eta = fmtTime(fTs); if (fTs > limitDate.getTime()) isNg = true;
+            }
+            tbody.insertAdjacentHTML('beforeend', `<tr class="${isFinished ? 'finished' : ''}">
+                <td style="font-weight:bold">${c.name}</td><td>${c.limit}</td><td>${job.baseRate?fmtTime(limitDate.getTime()-(cumulativeTarget/job.baseRate)*3600000):'--'}</td><td>${c.count}</td>
+                <td style="color:var(--blue); font-weight:bold; font-size:12px;">${isFinished?'完了':needed}</td>
+                <td style="background:#fff5eb; color:var(--orange); font-weight:bold; font-size:12px;">${isFinished?'-':reqRate}</td>
+                <td style="${isNg?'color:red;font-weight:bold;':''}">${isFinished?'✅':eta}</td><td>${isFinished?'OK':(isNg?'⚠️':'OK')}</td></tr>`);
+        }
+        if (job.started) renderLogs(id, avgRate);
+    }
+    function renderJob(id) {
+        const job = jobs[id]; const lastLog = job.logs[job.logs.length-1];
+        const html = `<div class="card ${job.isOpen ? 'open' : ''}" id="${id}">
+            <div class="card-header" onclick="toggleCard(event, '${id}')">
+                <div><span class="item-name">${job.name}</span><span class="base-rate-tag" onclick="event.stopPropagation(); editBaseRate('${id}')">基準: ${job.baseRate}/h</span></div>
+                <span style="font-weight:bold; font-size:10px;">${job.started && lastLog ? '残:'+lastLog.rem : '<span style="color:red">未開始</span>'} ▼</span>
+            </div>
+            <div class="card-content">
+                <button class="btn-support" onclick="addSupportCenter('${id}')">＋ 応援追加</button>
+                <table class="status-table">
+                    <thead><tr><th>先</th><th>門限</th><th>開始</th><th>設定</th><th>あと</th><th>必要時速</th><th>予測</th><th>判</th></tr></thead>
+                    <tbody id="${id}-body"></tbody>
+                </table>
+                ${!job.started ? `<button onclick="startJob('${id}')" style="width:100%; padding:10px; background:var(--success); color:white; border:none; border-radius:3px; font-weight:bold; font-size:11px;">製造開始</button>` : 
+                    `<div class="main-controls">
+                        <input type="number" id="${id}-in" class="prod-input" placeholder="残数" onfocus="this.select()" onkeydown="if(event.key==='Enter')record('${id}')">
+                        <button class="btn-rec" onclick="record('${id}')">記録</button>
+                        <div class="info-box"><span style="font-size:7px;color:#868e96">平均生産性</span><span id="${id}-avg" style="font-weight:bold; font-size:11px;">--</span></div>
+                        <div class="info-box"><span style="font-size:7px;color:#868e96">現在</span><span style="font-weight:bold; font-size:10px;">${fmtTime(getNow())}</span></div>
+                    </div><table class="log-table" id="${id}-logTable"></table>`}
+                <button onclick="deleteJob('${id}')" class="btn-del-job">アイテム削除</button>
+            </div></div>`;
+        document.getElementById('jobContainer').insertAdjacentHTML('beforeend', html);
+        refreshTable(id);
+    }
+    function renderLogs(id, avgRate) {
+        const job = jobs[id]; const table = document.getElementById(id + '-logTable'); if(!table) return;
+        const avgEl = document.getElementById(id + '-avg'); if(avgEl) avgEl.innerText = (Math.round(avgRate) || "--") + " 食/h";
+        table.innerHTML = "<tr><th>時刻</th><th>残数</th><th>生産性</th><th></th></tr>";
+        job.logs.slice().reverse().forEach((log, i) => {
+            const idx = job.logs.length-1-i; let r = "-";
+            if (idx > 0) { const h = (job.logs[idx].ts - job.logs[idx-1].ts)/3600000; r = h>0?(Math.round((job.logs[idx-1].rem - job.logs[idx].rem)/h) + " 食/h"):"0 食/h"; }
+            table.insertAdjacentHTML('beforeend', `<tr>
+                <td class="editable" onclick="editLog('${id}',${idx},'ts')">${fmtTime(log.ts)}</td>
+                <td class="editable" onclick="editLog('${id}',${idx},'rem')">${log.rem}</td>
+                <td>${r}</td><td><button onclick="deleteLog('${id}',${idx})" style="border:none;background:none;color:#ccc;font-size:10px;">×</button></td></tr>`);
+        });
+    }
+    function record(id) { const i = document.getElementById(id + '-in'); if(!i.value) return; jobs[id].logs.push({ rem: Number(i.value), ts: getNow().getTime() }); save(); refreshAll(); }
+    function refreshAll() { document.getElementById('jobContainer').innerHTML = ""; for(let id in jobs) renderJob(id); }
+    function toggleCard(event, id) { jobs[id].isOpen = !jobs[id].isOpen; save(); document.getElementById(id).classList.toggle('open'); }
+    function deleteLog(id, i) { if(confirm("消去？")) { jobs[id].logs.splice(i,1); save(); refreshAll(); } }
+    function deleteJob(id) { if(confirm("削除？")) { delete jobs[id]; save(); refreshAll(); } }
+    function resetAll() { if(confirm("全消去？")) { localStorage.clear(); location.reload(); } }
+    window.onload = () => { updateUI(); setInterval(() => { for(let id in jobs) if(jobs[id].isOpen) refreshTable(id); }, 30000); };
+</script>
+</body>
+</html>
