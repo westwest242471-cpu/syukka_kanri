@@ -170,7 +170,7 @@ function startItemWizard() {
                             let count = Number(num)||0;
                             // 朝霞の分割処理（N, Y, Fすべてに適用）
                             if (cName === '朝霞' && count > 0) {
-                                let fastLimit = (currentBin === 'N') ? "05:30" : (currentBin === 'Y') ? "12:30" : "19:30";
+                                let fastLimit = (currentBin === 'N') ? "05:30" : (currentBin === 'Y') ? "12:40" : "19:10";
                                 let normalLimit = binLimits[cName];
                                 let fastCount = Math.ceil(count / 2);
                                 let normalCount = count - fastCount;
