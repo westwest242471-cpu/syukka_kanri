@@ -28,9 +28,17 @@
         .base-rate-tag { font-size: 9px; color: #666; background: #eee; padding: 1px 4px; border-radius: 3px; margin-left: 5px; cursor: pointer; text-decoration: underline; }
         .card-content { display: none; padding: 4px; border-top: 1px solid #eee; }
         .card.open .card-content { display: block; }
-        .status-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 4px; }
-        .status-table th { background: #f4f4f4; font-size: 7px; padding: 2px 1px; border: 1px solid #ddd; }
-        .status-table td { border: 1px solid #ddd; padding: 2px 1px; text-align: center; font-size: 10px; }
+        .status-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 4px; word-break: break-all; }
+        .status-table th { background: #f4f4f4; font-size: 7px; padding: 1px 0; border: 1px solid #ddd; }
+        .status-table td { border: 1px solid #ddd; padding: 2px 0; text-align: center; font-size: 9px; line-height: 1.2; }
+        .status-table th:nth-child(1) { width: 15%; } /* 先 */
+        .status-table th:nth-child(2) { width: 10%; } /* 門限 */
+        .status-table th:nth-child(3) { width: 10%; } /* 開始 */
+        .status-table th:nth-child(4) { width: 9%; }  /* 設定 */
+        .status-table th:nth-child(5) { width: 9%; }  /* あと */
+        .status-table th:nth-child(6) { width: 11%; } /* 必要時速 */
+        .status-table th:nth-child(7) { width: 30%; } /* 予測 */
+        .status-table th:nth-child(8) { width: 6%; }  /* 判 */
         .finished { background: #e8f5e9 !important; color: #aaa !important; }
         .main-controls { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; margin: 4px 0; }
         .prod-input { width: 100%; border: 1.5px solid var(--blue); border-radius: 3px; font-size: 14px; font-weight: bold; text-align: center; box-sizing: border-box; height: 30px; }
@@ -375,12 +383,12 @@ function editItemName(id) {
             tbody.insertAdjacentHTML('beforeend', `<tr class="${isFinished ? 'finished' : ''}">
                 <td style="font-weight:bold">${c.name}<div class="progress-container"><div class="progress-fill" style="width:${progress}%"></div></div></td>
                 <td>${c.limit}</td><td>${job.baseRate?fmtTime(limitDate.getTime()-(cumulativeTarget/job.baseRate)*3600000):'--'}</td><td>${c.count}</td>
-                <td style="color:var(--blue); font-weight:bold; font-size:12px;">${isFinished?'完了':needed}</td>
-                <td style="background:#fff5eb; color:var(--orange); font-weight:bold; font-size:12px;">${isFinished?'-':reqRate}</td>
-                <td style="font-size:7px; text-align:center;">
-                    ${isFinished ? '✅' : `<span style="${isNg?'color:red;font-weight:bold;':''}">全:${eta}</span> / <span style="${isNgR?'color:red;font-weight:bold;':''}">直:${etaR}</span>`}
+                <td style="color:var(--blue); font-weight:bold; font-size:11px;">${isFinished?'完了':needed}</td>
+                <td style="background:#fff5eb; color:var(--orange); font-weight:bold; font-size:10px;">${isFinished?'-':reqRate}</td>
+                <td style="font-size:8px; text-align:center; white-space:nowrap;">
+                    ${isFinished ? '✅' : `<span style="${isNg?'color:red;':''}">全:${eta}</span><span style="color:#ccc">/</span><span style="${isNgR?'color:red;font-weight:bold;':''}">直:${etaR}</span>`}
                 </td>
-                <td style="font-size:9px;">${isFinished?'OK':(isNg || isNgR ? '<span style="color:red;font-weight:bold;">NG</span>' : 'OK')}</td></tr>`);
+                <td style="font-size:8px;">${isFinished?'OK':(isNg || isNgR ? '<span style="color:red;font-weight:bold;">NG</span>' : 'OK')}</td></tr>`);
         }
         if (job.started) renderLogs(id, avgRate, recentRate);
     }
