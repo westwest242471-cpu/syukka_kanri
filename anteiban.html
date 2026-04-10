@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>出荷管理 v18.6</title>
+    <title>出荷管理</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-512.png">
     <style>
@@ -69,7 +69,7 @@
 <div id="testBanner" class="test-banner"></div>
 
 <div style="background: var(--dark); color: white; padding: 4px; display: flex; justify-content: space-between; align-items: center;">
-    <span style="font-weight:bold; font-size: 11px;">出荷管理 v18.6</span>
+    <span style="font-weight:bold; font-size: 11px;">出荷管理</span>
     <div>
         <label style="font-size: 8px; cursor: pointer; background: #555; padding: 1px 4px; border-radius: 2px; margin-right: 4px;">
             <input type="checkbox" id="testModeToggle" onchange="toggleTestMode()"> テスト
@@ -88,7 +88,7 @@
 <div id="jobContainer"></div>
 
 <footer>
-    Developer: 1F加工西 | App Version: 18.9 (Stable)
+    Developer: 1F加工西 | App Version: 19.1 (Stable)
 </footer>
 
 <script>
@@ -115,8 +115,8 @@
 
     const BIN_CONFIGS = {
         'N': { start: "21:00", limits: { "立川":"04:00", "川口":"04:20", "練馬":"05:00", "朝霞":"06:00" } },
-        'Y': { start: "08:00", limits: { "立川":"10:50", "川口":"11:00", "練馬":"12:20", "朝霞":"13:00" } },
-        'F': { start: "12:00", limits: { "立川":"17:00", "川口":"17:30", "練馬":"18:20", "朝霞":"19:00" } }
+        'Y': { start: "05:00", limits: { "立川":"10:50", "川口":"11:20", "練馬":"12:20", "朝霞":"13:00" } },
+        'F': { start: "11:00", limits: { "立川":"17:00", "川口":"17:30", "練馬":"18:20", "朝霞":"20:00" } }
     };
 
     let currentBin = localStorage.getItem('ship_v18_bin') || 'N';
@@ -155,7 +155,7 @@
         updateUI();
     }
 
-    function startItemWizard() {
+function startItemWizard() {
         openModal("アイテム名", "text", "", (name) => {
             if (!name) return;
             openModal(`基準生産性`, "number", "", (rate) => {
@@ -168,11 +168,14 @@
                         const cName = centerNames[cIdx];
                         openModal(`${cName} 設定数`, "number", "", (num) => {
                             let count = Number(num)||0;
-                            if (currentBin === 'N' && cName === '朝霞' && count > 0) {
+                            // 朝霞の分割処理（N, Y, Fすべてに適用）
+                            if (cName === '朝霞' && count > 0) {
+                                let fastLimit = (currentBin === 'N') ? "05:30" : (currentBin === 'Y') ? "12:40" : "19:10";
+                                let normalLimit = binLimits[cName];
                                 let fastCount = Math.ceil(count / 2);
                                 let normalCount = count - fastCount;
-                                if(fastCount > 0) job.centerConfigs.push({ name: "朝霞(早)", limit: "05:30", count: fastCount });
-                                if(normalCount > 0) job.centerConfigs.push({ name: "朝霞", limit: "06:00", count: normalCount });
+                                if(fastCount > 0) job.centerConfigs.push({ name: "朝霞(早)", limit: fastLimit, count: fastCount });
+                                if(normalCount > 0) job.centerConfigs.push({ name: "朝霞", limit: normalLimit, count: normalCount });
                             } else {
                                 job.centerConfigs.push({ name: cName, limit: binLimits[cName], count: count });
                             }
@@ -203,7 +206,16 @@
             }
         });
     }
-
+　　// この関数をスクリプト内の適当な場所（editBaseRateの次など）に追加
+function editItemName(id) {
+    openModal(`${jobs[id].name} の名前変更`, "text", jobs[id].name, (newName) => {
+        if (newName && newName.trim() !== "") {
+            jobs[id].name = newName;
+            save();
+            refreshAll();
+        }
+    });
+}
     function finalizeAdd(job) { const id = 'JOB_' + Date.now(); jobs[id] = job; save(); refreshAll(); }
     function startJob(id) {
         const total = jobs[id].centerConfigs.reduce((s, c) => s + c.count, 0);
@@ -311,7 +323,7 @@
         const job = jobs[id]; const lastLog = job.logs[job.logs.length-1];
         const html = `<div class="card ${job.isOpen ? 'open' : ''}" id="${id}">
             <div class="card-header" onclick="toggleCard(event, '${id}')">
-                <div><span class="item-name">${job.name}</span><span class="base-rate-tag" onclick="event.stopPropagation(); editBaseRate('${id}')">基準: ${job.baseRate}/h</span></div>
+                <div><span class="item-name" onclick="event.stopPropagation(); editItemName('${id}')">${job.name}</span><span class="base-rate-tag" onclick="event.stopPropagation(); editBaseRate('${id}')">基準: ${job.baseRate}/h</span></div>
                 <span style="font-weight:bold; font-size:10px;">${job.started && lastLog ? '残:'+lastLog.rem : '<span style="color:red">未開始</span>'} ▼</span>
             </div>
             <div class="card-content">
