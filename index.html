@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -9,208 +10,566 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-512.png">
     <style>
-        :root { --danger: #dc3545; --success: #28a745; --blue: #007bff; --orange: #e67e22; --purple: #6f42c1; --dark: #333; }
-        body { font-family: sans-serif; margin: 1px; background-color: #f0f0f0; font-size: 10px; line-height: 1.0; display: flex; flex-direction: column; min-height: 100vh; }
-        #pwaInstallBanner { display: none; background: var(--blue); color: white; padding: 12px; text-align: center; font-weight: bold; font-size: 13px; cursor: pointer; border-bottom: 2px solid #fff; }
-        #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 20px; }
-        .modal-content { background: white; width: 90%; max-width: 300px; padding: 10px; border-radius: 6px; }
-        .modal-title { font-weight: bold; margin-bottom: 5px; color: var(--blue); font-size: 12px; text-align: center; }
-        .modal-input { width: 100%; padding: 8px; font-size: 16px; border: 2px solid var(--blue); border-radius: 4px; box-sizing: border-box; margin-bottom: 8px; }
-        .modal-btns { display: flex; gap: 4px; }
-        .modal-btns button { flex: 1; padding: 8px; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; }
-        .mode-selector { display: flex; background: #eee; padding: 2px; gap: 2px; margin-bottom: 3px; border-radius: 3px; }
-        .mode-btn { flex: 1; padding: 5px; border: none; border-radius: 2px; font-weight: bold; background: #ddd; color: #666; font-size: 11px; }
-        .mode-btn.active { background: var(--blue); color: white; }
-        .test-banner { background: #ff4757; color: white; padding: 2px; text-align: center; font-weight: bold; font-size: 9px; display: none; }
-        .card { background: white; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 4px; border-left: 3px solid var(--blue); }
-        .card-header { padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #fdfdfd; }
-        .item-name { font-size: 13px; font-weight: bold; color: var(--blue); text-decoration: underline; }
-        .base-rate-tag { font-size: 9px; color: #666; background: #eee; padding: 1px 4px; border-radius: 3px; margin-left: 5px; cursor: pointer; text-decoration: underline; }
-        .card-content { display: none; padding: 4px; border-top: 1px solid #eee; }
-        .card.open .card-content { display: block; }
-        .status-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 4px; word-break: break-all; }
-        .status-table th { background: #f4f4f4; font-size: 7px; padding: 1px 0; border: 1px solid #ddd; }
-        .status-table td { border: 1px solid #ddd; padding: 2px 0; text-align: center; font-size: 9px; line-height: 1.2; }
-        .status-table th:nth-child(1) { width: 15%; } /* 先 */
-        .status-table th:nth-child(2) { width: 10%; } /* 門限 */
-        .status-table th:nth-child(3) { width: 10%; } /* 開始 */
-        .status-table th:nth-child(4) { width: 9%; }  /* 設定 */
-        .status-table th:nth-child(5) { width: 9%; }  /* あと */
-        .status-table th:nth-child(6) { width: 11%; } /* 必要時速 */
-        .status-table th:nth-child(7) { width: 30%; } /* 予測 */
-        .status-table th:nth-child(8) { width: 6%; }  /* 判 */
-        .finished { background: #e8f5e9 !important; color: #aaa !important; }
-        .main-controls { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; margin: 4px 0; }
-        .prod-input { width: 100%; border: 1.5px solid var(--blue); border-radius: 3px; font-size: 14px; font-weight: bold; text-align: center; box-sizing: border-box; height: 30px; }
-        .btn-rec { background: var(--success); color: white; border: none; border-radius: 3px; font-weight: bold; height: 30px; font-size: 11px; }
-        .info-box { background: #fff9db; border: 1px solid #fab005; border-radius: 3px; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 30px; }
-        .btn-support { background: var(--purple); color: white; width: 100%; padding: 6px; border: none; border-radius: 3px; font-weight: bold; margin-bottom: 4px; font-size: 10px; }
-        .log-table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 4px; }
-        .log-table th { background: #f4f4f4; border: 1px solid #ddd; padding: 1px; }
-        .log-table td { border: 1px solid #ddd; padding: 2px; text-align: center; }
-        .editable { color: var(--blue); text-decoration: underline; }
-        .btn-del-job { width:100%; background:none; border:none; color:#ccc; font-size:9px; margin-top:5px; padding: 5px; }
-        
+        :root {
+            --danger: #dc3545;
+            --success: #28a745;
+            --blue: #007bff;
+            --orange: #e67e22;
+            --purple: #6f42c1;
+            --dark: #333;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 1px;
+            background-color: #f0f0f0;
+            font-size: 10px;
+            line-height: 1.0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        #pwaInstallBanner {
+            display: none;
+            background: var(--blue);
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 2px solid #fff;
+        }
+
+        #customModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 300px;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .modal-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--blue);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border: 2px solid var(--blue);
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 4px;
+        }
+
+        .modal-btns button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .mode-selector {
+            display: flex;
+            background: #eee;
+            padding: 2px;
+            gap: 2px;
+            margin-bottom: 3px;
+            border-radius: 3px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 5px;
+            border: none;
+            border-radius: 2px;
+            font-weight: bold;
+            background: #ddd;
+            color: #666;
+            font-size: 11px;
+        }
+
+        .mode-btn.active {
+            background: var(--blue);
+            color: white;
+        }
+
+        .test-banner {
+            background: #ff4757;
+            color: white;
+            padding: 2px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 9px;
+            display: none;
+        }
+
+        .card {
+            background: white;
+            border-radius: 3px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            margin-bottom: 4px;
+            border-left: 3px solid var(--blue);
+        }
+
+        .card-header {
+            padding: 4px 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: #fdfdfd;
+        }
+
+        .item-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--blue);
+            text-decoration: underline;
+        }
+
+        .base-rate-tag {
+            font-size: 9px;
+            color: #666;
+            background: #eee;
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-left: 5px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .card-content {
+            display: none;
+            padding: 4px;
+            border-top: 1px solid #eee;
+        }
+
+        .card.open .card-content {
+            display: block;
+        }
+
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .status-table th {
+            background: #f4f4f4;
+            font-size: 7px;
+            padding: 1px 0;
+            border: 1px solid #ddd;
+        }
+
+        .status-table td {
+            border: 1px solid #ddd;
+            padding: 2px 0;
+            text-align: center;
+            font-size: 9px;
+            line-height: 1.2;
+        }
+
+        .status-table th:nth-child(1) {
+            width: 15%;
+        }
+
+        /* 先 */
+        .status-table th:nth-child(2) {
+            width: 10%;
+        }
+
+        /* 門限 */
+        .status-table th:nth-child(3) {
+            width: 10%;
+        }
+
+        /* 開始 */
+        .status-table th:nth-child(4) {
+            width: 9%;
+        }
+
+        /* 設定 */
+        .status-table th:nth-child(5) {
+            width: 9%;
+        }
+
+        /* あと */
+        .status-table th:nth-child(6) {
+            width: 11%;
+        }
+
+        /* 必要時速 */
+        .status-table th:nth-child(7) {
+            width: 30%;
+        }
+
+        /* 予測 */
+        .status-table th:nth-child(8) {
+            width: 6%;
+        }
+
+        /* 判 */
+        .finished {
+            background: #e8f5e9 !important;
+            color: #aaa !important;
+        }
+
+        .main-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 3px;
+            margin: 4px 0;
+        }
+
+        .prod-input {
+            width: 100%;
+            border: 1.5px solid var(--blue);
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            box-sizing: border-box;
+            height: 30px;
+        }
+
+        .btn-rec {
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            font-weight: bold;
+            height: 30px;
+            font-size: 11px;
+            flex: 5;
+        }
+
+        .btn-break {
+            background: var(--orange);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            font-weight: bold;
+            height: 30px;
+            font-size: 10px;
+            flex: 1;
+        }
+
+        .info-box {
+            background: #fff9db;
+            border: 1px solid #fab005;
+            border-radius: 3px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 30px;
+        }
+
+        .btn-support {
+            background: var(--purple);
+            color: white;
+            width: 100%;
+            padding: 6px;
+            border: none;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 10px;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+            margin-top: 4px;
+        }
+
+        .log-table th {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            padding: 1px;
+        }
+
+        .log-table td {
+            border: 1px solid #ddd;
+            padding: 2px;
+            text-align: center;
+        }
+
+        .editable {
+            color: var(--blue);
+            text-decoration: underline;
+        }
+
+        .btn-del-job {
+            width: 100%;
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 9px;
+            margin-top: 5px;
+            padding: 5px;
+        }
+
         /* 修正・追加分 */
-        .progress-container { width: 100%; height: 3px; background: #eee; border-radius: 2px; margin-top: 2px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--success); transition: width 0.3s ease; }
-        .settings-btn { background: none; border: none; color: white; cursor: pointer; font-size: 14px; padding: 2px 5px; }
-        .config-form { font-size: 11px; max-height: 300px; overflow-y: auto; }
-        .config-group { margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
-        .config-row { display: flex; gap: 4px; align-items: center; margin-bottom: 2px; }
-        .config-row label { flex: 1; }
-        .config-row input { width: 50px; font-size: 11px; padding: 2px; border: 1px solid #ccc; border-radius: 2px; }
-        
+        .progress-container {
+            width: 100%;
+            height: 3px;
+            background: #eee;
+            border-radius: 2px;
+            margin-top: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            transition: width 0.3s ease;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 5px;
+        }
+
+        .config-form {
+            font-size: 11px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .config-group {
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+        }
+
+        .config-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            margin-bottom: 2px;
+        }
+
+        .config-row label {
+            flex: 1;
+        }
+
+        .config-row input {
+            width: 50px;
+            font-size: 11px;
+            padding: 2px;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+        }
+
         /* デベロッパー表記用スタイル */
-        footer { margin-top: auto; padding: 15px 5px; text-align: center; color: #bbb; font-size: 8px; }
+        footer {
+            margin-top: auto;
+            padding: 15px 5px;
+            text-align: center;
+            color: #bbb;
+            font-size: 8px;
+        }
     </style>
 </head>
+
 <body>
 
-<div id="pwaInstallBanner">📲 ホーム画面に追加してオフラインで使う</div>
+    <div id="pwaInstallBanner">📲 ホーム画面に追加してオフラインで使う</div>
 
-<div id="customModal">
-    <div class="modal-content">
-        <div id="modalTitle" class="modal-title"></div>
-        <input type="text" id="modalInput" class="modal-input" autocomplete="off">
-        <div class="modal-btns" id="modalBtnsNormal">
-            <button id="modalCancel" style="background:#ccc;">閉じる</button>
-            <button id="modalOk" style="background:var(--blue); color:white;">決定</button>
+    <div id="customModal">
+        <div class="modal-content">
+            <div id="modalTitle" class="modal-title"></div>
+            <input type="text" id="modalInput" class="modal-input" autocomplete="off">
+            <div class="modal-btns" id="modalBtnsNormal">
+                <button id="modalCancel" style="background:#ccc;">閉じる</button>
+                <button id="modalOk" style="background:var(--blue); color:white;">決定</button>
+            </div>
+            <div class="modal-btns" id="modalBtnsConfirm" style="display:none;">
+                <button id="confirmNo" style="background:#ccc;">未開始</button>
+                <button id="confirmYes" style="background:var(--success); color:white;">開始済み</button>
+            </div>
         </div>
-        <div class="modal-btns" id="modalBtnsConfirm" style="display:none;">
-            <button id="confirmNo" style="background:#ccc;">未開始</button>
-            <button id="confirmYes" style="background:var(--success); color:white;">開始済み</button>
+    </div>
+
+    <div id="testBanner" class="test-banner"></div>
+
+    <div
+        style="background: var(--dark); color: white; padding: 4px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <span style="font-weight:bold; font-size: 11px;">出荷管理</span>
+            <button onclick="openSettings()" class="settings-btn" title="設定">⚙️</button>
+        </div>
+        <div>
+            <label
+                style="font-size: 8px; cursor: pointer; background: #555; padding: 1px 4px; border-radius: 2px; margin-right: 4px;">
+                <input type="checkbox" id="testModeToggle" onchange="toggleTestMode()"> テスト
+            </label>
+            <button onclick="resetAll()"
+                style="font-size: 8px; background: var(--danger); color: white; border: none; padding: 1px 4px;">全消去</button>
+            <button onclick="resetRecordsOnly()"
+                style="font-size: 8px; background: var(--orange); color: white; border: none; padding: 1px 4px; margin-left: 2px;">全リセット</button>
         </div>
     </div>
-</div>
 
-<div id="testBanner" class="test-banner"></div>
-
-<div style="background: var(--dark); color: white; padding: 4px; display: flex; justify-content: space-between; align-items: center;">
-    <div>
-        <span style="font-weight:bold; font-size: 11px;">出荷管理</span>
-        <button onclick="openSettings()" class="settings-btn" title="設定">⚙️</button>
+    <div class="mode-selector">
+        <button id="btn-N" class="mode-btn" onclick="changeBinMode('N')">N便</button>
+        <button id="btn-Y" class="mode-btn" onclick="changeBinMode('Y')">Y便</button>
+        <button id="btn-F" class="mode-btn" onclick="changeBinMode('F')">F便</button>
     </div>
-    <div>
-        <label style="font-size: 8px; cursor: pointer; background: #555; padding: 1px 4px; border-radius: 2px; margin-right: 4px;">
-            <input type="checkbox" id="testModeToggle" onchange="toggleTestMode()"> テスト
-        </label>
-        <button onclick="resetAll()" style="font-size: 8px; background: var(--danger); color: white; border: none; padding: 1px 4px;">全消去</button>
-    </div>
-</div>
 
-<div class="mode-selector">
-    <button id="btn-N" class="mode-btn" onclick="changeBinMode('N')">N便</button>
-    <button id="btn-Y" class="mode-btn" onclick="changeBinMode('Y')">Y便</button>
-    <button id="btn-F" class="mode-btn" onclick="changeBinMode('F')">F便</button>
-</div>
+    <button onclick="startItemWizard()"
+        style="width:100%; padding:8px; background:var(--blue); color:white; border:none; border-radius:3px; font-weight:bold; margin-bottom:4px; font-size: 12px;">＋
+        新規登録</button>
+    <div id="jobContainer"></div>
 
-<button onclick="startItemWizard()" style="width:100%; padding:8px; background:var(--blue); color:white; border:none; border-radius:3px; font-weight:bold; margin-bottom:4px; font-size: 12px;">＋ 新規登録</button>
-<div id="jobContainer"></div>
+    <footer>
+        Developer: 1F加工西 | App Version: 19.5 (Stable)
+    </footer>
 
-<footer>
-    Developer: 1F加工西 | App Version: 19.3 (Stable)
-</footer>
-
-<script>
-    /* PWA インストール制御 */
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault(); deferredPrompt = e;
-        document.getElementById('pwaInstallBanner').style.display = 'block';
-    });
-    document.getElementById('pwaInstallBanner').onclick = async () => {
-        if (!deferredPrompt) return;
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') document.getElementById('pwaInstallBanner').style.display = 'none';
-        deferredPrompt = null;
-    };
-
-    /* SW登録 */
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err));
+    <script>
+        /* PWA インストール制御 */
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); deferredPrompt = e;
+            document.getElementById('pwaInstallBanner').style.display = 'block';
         });
-    }
+        document.getElementById('pwaInstallBanner').onclick = async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') document.getElementById('pwaInstallBanner').style.display = 'none';
+            deferredPrompt = null;
+        };
 
-    /* 初期設定 */
-    const DEFAULT_CONFIGS = {
-        'N': { start: "21:00", limits: { "立川":"04:00", "川口":"04:20", "練馬":"05:00", "朝霞":"06:00" } },
-        'Y': { start: "05:00", limits: { "立川":"10:50", "川口":"11:20", "練馬":"12:20", "朝霞":"13:00" } },
-        'F': { start: "11:00", limits: { "立川":"17:00", "川口":"17:30", "練馬":"18:20", "朝霞":"20:00" } }
-    };
-    let BIN_CONFIGS = JSON.parse(localStorage.getItem('ship_v19_configs')) || DEFAULT_CONFIGS;
-
-    function saveConfigs() {
-        localStorage.setItem('ship_v19_configs', JSON.stringify(BIN_CONFIGS));
-    }
-
-    function openSettings() {
-        let html = '<div class="config-form">';
-        ['N', 'Y', 'F'].forEach(mode => {
-            html += `<div class="config-group"><strong>${mode}便</strong> (開始: <input type="text" value="${BIN_CONFIGS[mode].start}" onchange="BIN_CONFIGS['${mode}'].start=this.value;saveConfigs()">)`;
-            Object.keys(BIN_CONFIGS[mode].limits).forEach(center => {
-                html += `<div class="config-row"><label>${center}</label> 門限:<input type="text" value="${BIN_CONFIGS[mode].limits[center]}" onchange="BIN_CONFIGS['${mode}'].limits['${center}']=this.value;saveConfigs()"></div>`;
+        /* SW登録 */
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW Error', err));
             });
-            html += '</div>';
-        });
-        html += '</div><p style="font-size:8px;color:red;">※門限形式は HH:MM。変更後は新規登録の際に反映されます。</p>';
-        openModal("便・門限設定", "html", "", () => { updateUI(); });
-        document.getElementById('modalInput').style.display = 'none';
-        document.getElementById('modalTitle').insertAdjacentHTML('afterend', `<div id="configContainer" style="margin-bottom:10px;">${html}</div>`);
-    }
+        }
 
-    let currentBin = localStorage.getItem('ship_v18_bin') || 'N';
-    let jobs = JSON.parse(localStorage.getItem(`ship_v18_data_${currentBin}`)) || {};
-    let timeOffset = Number(localStorage.getItem('ship_v18_offset')) || 0;
+        /* 初期設定 */
+        const DEFAULT_CONFIGS = {
+            'N': { start: "21:00", limits: { "立川": "04:00", "川口": "04:20", "練馬": "05:00", "朝霞": "06:00" } },
+            'Y': { start: "05:00", limits: { "立川": "10:50", "川口": "11:20", "練馬": "12:20", "朝霞": "13:00" } },
+            'F': { start: "11:00", limits: { "立川": "17:00", "川口": "17:30", "練馬": "18:20", "朝霞": "20:00" } }
+        };
+        let BIN_CONFIGS = JSON.parse(localStorage.getItem('ship_v19_configs')) || DEFAULT_CONFIGS;
 
-    function getNow() { return new Date(Date.now() + timeOffset); }
+        function saveConfigs() {
+            localStorage.setItem('ship_v19_configs', JSON.stringify(BIN_CONFIGS));
+        }
 
-    let modalCallback = null;
-    function openModal(title, type, defVal, callback, isConfirm = false) {
-        // モーダルの状態をリセット
-        const cfg = document.getElementById('configContainer');
-        if (cfg) cfg.remove();
-        document.getElementById('modalInput').style.display = isConfirm ? 'none' : 'block';
+        function openSettings() {
+            let html = '<div class="config-form">';
+            ['N', 'Y', 'F'].forEach(mode => {
+                html += `<div class="config-group"><strong>${mode}便</strong> (開始: <input type="text" value="${BIN_CONFIGS[mode].start}" onchange="BIN_CONFIGS['${mode}'].start=this.value;saveConfigs()">)`;
+                Object.keys(BIN_CONFIGS[mode].limits).forEach(center => {
+                    html += `<div class="config-row"><label>${center}</label> 門限:<input type="text" value="${BIN_CONFIGS[mode].limits[center]}" onchange="BIN_CONFIGS['${mode}'].limits['${center}']=this.value;saveConfigs()"></div>`;
+                });
+                html += '</div>';
+            });
+            html += '</div><p style="font-size:8px;color:red;">※門限形式は HH:MM。変更後は新規登録の際に反映されます。</p>';
+            openModal("便・門限設定", "html", "", () => { updateUI(); });
+            document.getElementById('modalInput').style.display = 'none';
+            document.getElementById('modalTitle').insertAdjacentHTML('afterend', `<div id="configContainer" style="margin-bottom:10px;">${html}</div>`);
+        }
+
+        let currentBin = localStorage.getItem('ship_v18_bin') || 'N';
+        let jobs = JSON.parse(localStorage.getItem(`ship_v18_data_${currentBin}`)) || {};
+        let timeOffset = Number(localStorage.getItem('ship_v18_offset')) || 0;
+
+        function getNow() { return new Date(Date.now() + timeOffset); }
+
+        let modalCallback = null;
+        function openModal(title, type, defVal, callback, isConfirm = false) {
+            // モーダルの状態をリセット
+            const cfg = document.getElementById('configContainer');
+            if (cfg) cfg.remove();
+            document.getElementById('modalInput').style.display = isConfirm ? 'none' : 'block';
+            document.getElementById('modalOk').onclick = () => {
+                const val = document.getElementById('modalInput').value;
+                document.getElementById('customModal').style.display = 'none';
+                if (modalCallback) modalCallback(val);
+            };
+
+            document.getElementById('modalTitle').innerText = title;
+            const input = document.getElementById('modalInput');
+            input.type = type; input.value = defVal;
+            document.getElementById('modalBtnsNormal').style.display = isConfirm ? 'none' : 'flex';
+            document.getElementById('modalBtnsConfirm').style.display = isConfirm ? 'flex' : 'none';
+            document.getElementById('customModal').style.display = 'flex';
+            modalCallback = callback;
+            if (!isConfirm) setTimeout(() => { input.focus(); if (type === 'number') input.select(); }, 100);
+        }
         document.getElementById('modalOk').onclick = () => {
             const val = document.getElementById('modalInput').value;
             document.getElementById('customModal').style.display = 'none';
             if (modalCallback) modalCallback(val);
         };
+        document.getElementById('modalCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; };
+        document.getElementById('confirmYes').onclick = () => { document.getElementById('customModal').style.display = 'none'; if (modalCallback) modalCallback(true); };
+        document.getElementById('confirmNo').onclick = () => { document.getElementById('customModal').style.display = 'none'; if (modalCallback) modalCallback(false); };
+        document.getElementById('modalInput').onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('modalOk').click(); };
 
-        document.getElementById('modalTitle').innerText = title;
-        const input = document.getElementById('modalInput');
-        input.type = type; input.value = defVal;
-        document.getElementById('modalBtnsNormal').style.display = isConfirm ? 'none' : 'flex';
-        document.getElementById('modalBtnsConfirm').style.display = isConfirm ? 'flex' : 'none';
-        document.getElementById('customModal').style.display = 'flex';
-        modalCallback = callback;
-        if(!isConfirm) setTimeout(() => { input.focus(); if(type==='number') input.select(); }, 100);
-    }
-    document.getElementById('modalOk').onclick = () => {
-        const val = document.getElementById('modalInput').value;
-        document.getElementById('customModal').style.display = 'none';
-        if (modalCallback) modalCallback(val);
-    };
-    document.getElementById('modalCancel').onclick = () => { document.getElementById('customModal').style.display = 'none'; };
-    document.getElementById('confirmYes').onclick = () => { document.getElementById('customModal').style.display = 'none'; if (modalCallback) modalCallback(true); };
-    document.getElementById('confirmNo').onclick = () => { document.getElementById('customModal').style.display = 'none'; if (modalCallback) modalCallback(false); };
-    document.getElementById('modalInput').onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('modalOk').click(); };
+        function changeBinMode(mode) {
+            currentBin = mode;
+            localStorage.setItem('ship_v18_bin', mode);
+            jobs = JSON.parse(localStorage.getItem(`ship_v18_data_${mode}`)) || {};
+            if (document.getElementById('testModeToggle').checked) toggleTestMode();
+            updateUI();
+        }
 
-    function changeBinMode(mode) {
-        currentBin = mode;
-        localStorage.setItem('ship_v18_bin', mode);
-        jobs = JSON.parse(localStorage.getItem(`ship_v18_data_${mode}`)) || {};
-        if (document.getElementById('testModeToggle').checked) toggleTestMode(); 
-        updateUI();
-    }
+        function startItemWizard() {
+            openModal("アイテム名", "text", "", (name) => {
+                if (!name) return;
+                const id = 'JOB_' + Date.now();
+                jobs[id] = { name, baseRate: 0, centerConfigs: [], started: false, logs: [], isOpen: true };
+                configureItem(id);
+            });
+        }
 
-function startItemWizard() {
-        openModal("アイテム名", "text", "", (name) => {
-            if (!name) return;
-            openModal(`基準生産性`, "number", "", (rate) => {
-                let job = { name, baseRate: Number(rate)||0, centerConfigs: [], started: false, logs: [], isOpen: true };
+        function configureItem(id) {
+            const job = jobs[id];
+            openModal(`基準生産性`, "number", job.baseRate || "", (rate) => {
+                job.baseRate = Number(rate) || 0;
+                job.centerConfigs = [];
                 const binLimits = BIN_CONFIGS[currentBin].limits;
                 const centerNames = Object.keys(binLimits);
                 let cIdx = 0;
@@ -218,15 +577,14 @@ function startItemWizard() {
                     if (cIdx < centerNames.length) {
                         const cName = centerNames[cIdx];
                         openModal(`${cName} 設定数`, "number", "", (num) => {
-                            let count = Number(num)||0;
-                            // 朝霞の分割処理（N, Y, Fすべてに適用）
+                            let count = Number(num) || 0;
                             if (cName === '朝霞' && count > 0) {
                                 let fastLimit = (currentBin === 'N') ? "05:30" : (currentBin === 'Y') ? "12:40" : "19:10";
                                 let normalLimit = binLimits[cName];
                                 let fastCount = Math.ceil(count / 2);
                                 let normalCount = count - fastCount;
-                                if(fastCount > 0) job.centerConfigs.push({ name: "朝霞(早)", limit: fastLimit, count: fastCount });
-                                if(normalCount > 0) job.centerConfigs.push({ name: "朝霞", limit: normalLimit, count: normalCount });
+                                if (fastCount > 0) job.centerConfigs.push({ name: "朝霞(早)", limit: fastLimit, count: fastCount });
+                                if (normalCount > 0) job.centerConfigs.push({ name: "朝霞", limit: normalLimit, count: normalCount });
                             } else {
                                 job.centerConfigs.push({ name: cName, limit: binLimits[cName], count: count });
                             }
@@ -237,167 +595,190 @@ function startItemWizard() {
                             if (started === true) {
                                 const total = job.centerConfigs.reduce((s, c) => s + c.count, 0);
                                 openModal("現在の残数", "number", total, (rem) => {
-                                    job.started = true; job.logs.push({ rem: Number(rem), ts: getNow().getTime() });
-                                    finalizeAdd(job);
+                                    job.started = true; job.logs = [{ rem: Number(rem), ts: getNow().getTime() }];
+                                    save(); refreshAll();
                                 });
-                            } else { finalizeAdd(job); }
+                            } else { save(); refreshAll(); }
                         }, true);
                     }
                 }
                 nextC();
             });
-        });
-    }
-
-    function editBaseRate(id) {
-        openModal(`${jobs[id].name} の基準生産性`, "number", jobs[id].baseRate, (rate) => {
-            if(rate !== "" && rate !== null) {
-                jobs[id].baseRate = Number(rate);
-                save(); refreshAll();
-            }
-        });
-    }
-　　// この関数をスクリプト内の適当な場所（editBaseRateの次など）に追加
-function editItemName(id) {
-    openModal(`${jobs[id].name} の名前変更`, "text", jobs[id].name, (newName) => {
-        if (newName && newName.trim() !== "") {
-            jobs[id].name = newName;
-            save();
-            refreshAll();
         }
-    });
-}
-    function finalizeAdd(job) { const id = 'JOB_' + Date.now(); jobs[id] = job; save(); refreshAll(); }
-    function startJob(id) {
-        const total = jobs[id].centerConfigs.reduce((s, c) => s + c.count, 0);
-        openModal("現在の残数", "number", total, (rem) => {
-            if(rem === null || rem === "") return;
-            jobs[id].started = true; jobs[id].logs = [{ rem: Number(rem), ts: getNow().getTime() }];
-            save(); refreshAll();
-        });
-    }
-    function addSupportCenter(id) {
-        openModal("応援先", "text", "", (name) => {
-            if (!name) return;
-            openModal(`門限`, "text", "12:00", (limit) => {
-                if (!limit) return;
-                openModal(`設定数`, "number", "", (count) => {
-                    jobs[id].centerConfigs.push({ name, limit, count: Number(count)||0, isSupport: true });
-                    jobs[id].centerConfigs.sort((a, b) => a.limit.localeCompare(b.limit));
+
+        function editBaseRate(id) {
+            openModal(`${jobs[id].name} の基準生産性`, "number", jobs[id].baseRate, (rate) => {
+                if (rate !== "" && rate !== null) {
+                    jobs[id].baseRate = Number(rate);
                     save(); refreshAll();
-                });
-            });
-        });
-    }
-    function editLog(id, logIdx, field) {
-        const log = jobs[id].logs[logIdx];
-        if (field === 'rem') {
-            openModal("修正残数", "number", log.rem, (v) => { if(v!=="") { jobs[id].logs[logIdx].rem = Number(v); save(); refreshAll(); } });
-        } else if (field === 'ts') {
-            const d = new Date(log.ts);
-            openModal("修正時刻", "text", `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`, (v) => {
-                if(v) { 
-                    const [h, m] = v.split(':').map(Number); 
-                    const newTs = new Date(log.ts).setHours(h, m, 0, 0);
-                    jobs[id].logs[logIdx].ts = newTs; 
-                    jobs[id].logs.sort((a, b) => a.ts - b.ts); 
-                    save(); refreshAll(); 
                 }
             });
         }
-    }
-    function save() { localStorage.setItem(`ship_v18_data_${currentBin}`, JSON.stringify(jobs)); }
-    function fmtTime(ts) { const d = new Date(ts); return d.getHours() + ":" + d.getMinutes().toString().padStart(2, '0'); }
-    function toggleTestMode() {
-        if (document.getElementById('testModeToggle').checked) {
-            const realNow = new Date(); const target = new Date();
-            const [h, m] = BIN_CONFIGS[currentBin].start.split(':').map(Number);
-            target.setHours(h, m, 0, 0);
-            if (h >= 18 && realNow.getHours() < 12) target.setDate(target.getDate() - 1);
-            timeOffset = target.getTime() - realNow.getTime();
-        } else { timeOffset = 0; }
-        localStorage.setItem('ship_v18_offset', timeOffset);
-        updateTestUI(); refreshAll();
-    }
-    function updateTestUI() {
-        const isTest = timeOffset !== 0;
-        document.getElementById('testModeToggle').checked = isTest;
-        const banner = document.getElementById('testBanner');
-        banner.style.display = isTest ? 'block' : 'none';
-        banner.innerText = `【TEST】${currentBin}便(${BIN_CONFIGS[currentBin].start})`;
-    }
-    function getLimitDate(limitStr) {
-        const now = getNow(); const [h, m] = limitStr.split(':').map(Number);
-        let d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
-        if (currentBin === 'N') {
-            if (now.getHours() >= 12 && h < 12) d.setDate(d.getDate() + 1);
-            else if (now.getHours() < 12 && h >= 12) d.setDate(d.getDate() - 1);
+        // この関数をスクリプト内の適当な場所（editBaseRateの次など）に追加
+        function editItemName(id) {
+            openModal(`${jobs[id].name} の名前変更`, "text", jobs[id].name, (newName) => {
+                if (newName && newName.trim() !== "") {
+                    jobs[id].name = newName;
+                    save();
+                    refreshAll();
+                }
+            });
         }
-        return d;
-    }
-    function updateUI() {
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`btn-${currentBin}`).classList.add('active');
-        updateTestUI(); refreshAll();
-    }
-    function refreshTable(id) {
-        const job = jobs[id]; const tbody = document.getElementById(id + '-body'); if (!tbody) return;
-        tbody.innerHTML = "";
-        const nowTs = getNow().getTime();
-        const lastLog = job.logs.length > 0 ? job.logs[job.logs.length-1] : null;
-        const startLog = job.logs.length > 0 ? job.logs[0] : null;
-        
-        // 生産性計算（全体平均と直近30分）
-        let avgRate = (startLog && lastLog && lastLog.ts > startLog.ts) ? (startLog.rem - lastLog.rem) / ((lastLog.ts - startLog.ts) / 3600000) : 0;
-        let recentLog = lastLog ? (job.logs.find(l => l.ts >= nowTs - 30 * 60000) || startLog) : null;
-        let recentRate = (recentLog && lastLog && lastLog.ts > recentLog.ts) ? (recentLog.rem - lastLog.rem) / ((lastLog.ts - recentLog.ts) / 3600000) : 0;
-
-        let cumulativeTarget = 0;
-        const totalJobCount = job.centerConfigs.reduce((s,c)=>s+c.count,0);
-        const totalProcessed = lastLog ? (totalJobCount - lastLog.rem) : 0;
-        
-        let prevCumulative = 0;
-        for (let c of job.centerConfigs) {
-            if (c.count === 0) continue;
-            cumulativeTarget += c.count;
-            const limitDate = getLimitDate(c.limit);
-            const needed = Math.max(0, cumulativeTarget - totalProcessed);
-            const isFinished = job.started && needed <= 0;
-            const hrsLeft = (limitDate.getTime() - nowTs) / 3600000;
-            let reqRate = (job.started && !isFinished) ? (hrsLeft > 0 ? Math.ceil(needed / hrsLeft) : "OVER") : "--";
-            let eta = "--:--", etaR = "--:--", isNg = false, isNgR = false;
-            
-            // 進捗バーの計算（前の拠点が終わるまで次が始まらない逐次計算）
-            const processedForThisCenter = Math.max(0, Math.min(c.count, totalProcessed - prevCumulative));
-            const progress = c.count > 0 ? Math.round((processedForThisCenter / c.count) * 100) : 0;
-            prevCumulative = cumulativeTarget;
-
-            if (avgRate > 0 && !isFinished && lastLog) {
-                const fTs = lastLog.ts + (needed / avgRate) * 3600000;
-                eta = fmtTime(fTs); if (fTs > limitDate.getTime()) isNg = true;
+        function finalizeAdd(job) { const id = 'JOB_' + Date.now(); jobs[id] = job; save(); refreshAll(); }
+        function addBreak(id) {
+            const lastLog = jobs[id].logs[jobs[id].logs.length - 1];
+            const lastRem = lastLog ? lastLog.rem : 0;
+            openModal("休憩時間(分)", "number", 75, (min) => {
+                if (min === null || min === "") return;
+                jobs[id].logs.push({ isBreak: true, duration: Number(min), ts: getNow().getTime(), rem: lastRem });
+                save(); refreshAll();
+            });
+        }
+        function startJob(id) {
+            if (jobs[id].centerConfigs.length === 0) {
+                configureItem(id);
+            } else {
+                const total = jobs[id].centerConfigs.reduce((s, c) => s + c.count, 0);
+                openModal("現在の残数", "number", total, (rem) => {
+                    if (rem === null || rem === "") return;
+                    jobs[id].started = true; jobs[id].logs = [{ rem: Number(rem), ts: getNow().getTime() }];
+                    save(); refreshAll();
+                });
             }
-            if (recentRate > 0 && !isFinished && lastLog) {
-                const fTsR = lastLog.ts + (needed / recentRate) * 3600000;
-                etaR = fmtTime(fTsR); if (fTsR > limitDate.getTime()) isNgR = true;
+        }
+        function addSupportCenter(id) {
+            openModal("応援先", "text", "", (name) => {
+                if (!name) return;
+                openModal(`門限`, "text", "12:00", (limit) => {
+                    if (!limit) return;
+                    openModal(`設定数`, "number", "", (count) => {
+                        jobs[id].centerConfigs.push({ name, limit, count: Number(count) || 0, isSupport: true });
+                        jobs[id].centerConfigs.sort((a, b) => a.limit.localeCompare(b.limit));
+                        save(); refreshAll();
+                    });
+                });
+            });
+        }
+        function editLog(id, logIdx, field) {
+            const log = jobs[id].logs[logIdx];
+            if (field === 'rem') {
+                openModal("修正残数", "number", log.rem, (v) => { if (v !== "") { jobs[id].logs[logIdx].rem = Number(v); save(); refreshAll(); } });
+            } else if (field === 'duration') {
+                openModal("修正休憩時間(分)", "number", log.duration, (v) => { if (v !== "") { jobs[id].logs[logIdx].duration = Number(v); save(); refreshAll(); } });
+            } else if (field === 'ts') {
+                const d = new Date(log.ts);
+                openModal("修正時刻", "text", `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`, (v) => {
+                    if (v) {
+                        const [h, m] = v.split(':').map(Number);
+                        const newTs = new Date(log.ts).setHours(h, m, 0, 0);
+                        jobs[id].logs[logIdx].ts = newTs;
+                        jobs[id].logs.sort((a, b) => a.ts - b.ts);
+                        save(); refreshAll();
+                    }
+                });
             }
-            tbody.insertAdjacentHTML('beforeend', `<tr class="${isFinished ? 'finished' : ''}">
+        }
+        function save() { localStorage.setItem(`ship_v18_data_${currentBin}`, JSON.stringify(jobs)); }
+        function fmtTime(ts) { const d = new Date(ts); return d.getHours() + ":" + d.getMinutes().toString().padStart(2, '0'); }
+        function toggleTestMode() {
+            if (document.getElementById('testModeToggle').checked) {
+                const realNow = new Date(); const target = new Date();
+                const [h, m] = BIN_CONFIGS[currentBin].start.split(':').map(Number);
+                target.setHours(h, m, 0, 0);
+                if (h >= 18 && realNow.getHours() < 12) target.setDate(target.getDate() - 1);
+                timeOffset = target.getTime() - realNow.getTime();
+            } else { timeOffset = 0; }
+            localStorage.setItem('ship_v18_offset', timeOffset);
+            updateTestUI(); refreshAll();
+        }
+        function updateTestUI() {
+            const isTest = timeOffset !== 0;
+            document.getElementById('testModeToggle').checked = isTest;
+            const banner = document.getElementById('testBanner');
+            banner.style.display = isTest ? 'block' : 'none';
+            banner.innerText = `【TEST】${currentBin}便(${BIN_CONFIGS[currentBin].start})`;
+        }
+        function getLimitDate(limitStr) {
+            const now = getNow(); const [h, m] = limitStr.split(':').map(Number);
+            let d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+            if (currentBin === 'N') {
+                if (now.getHours() >= 12 && h < 12) d.setDate(d.getDate() + 1);
+                else if (now.getHours() < 12 && h >= 12) d.setDate(d.getDate() - 1);
+            }
+            return d;
+        }
+        function updateUI() {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${currentBin}`).classList.add('active');
+            updateTestUI(); refreshAll();
+        }
+        function refreshTable(id) {
+            const job = jobs[id]; const tbody = document.getElementById(id + '-body'); if (!tbody) return;
+            tbody.innerHTML = "";
+            const nowTs = getNow().getTime();
+            const lastLog = job.logs.length > 0 ? job.logs[job.logs.length - 1] : null;
+            const startLog = job.logs.length > 0 ? job.logs[0] : null;
+
+            // 生産性計算（全体平均と直近10分）
+            const getBreakMin = (rangeStart, rangeEnd) => {
+                return job.logs.filter(l => l.isBreak && l.ts > rangeStart && l.ts <= rangeEnd).reduce((s, l) => s + (l.duration || 0), 0);
+            };
+
+            let avgBreakMin = (startLog && lastLog) ? getBreakMin(startLog.ts, lastLog.ts) : 0;
+            let avgTimeHrs = (startLog && lastLog && lastLog.ts > startLog.ts) ? (lastLog.ts - startLog.ts - avgBreakMin * 60000) / 3600000 : 0;
+            let avgRate = (avgTimeHrs > 0) ? (startLog.rem - lastLog.rem) / avgTimeHrs : 0;
+
+            let prevLog = lastLog ? (job.logs.slice().reverse().find(l => !l.isBreak && l.ts <= nowTs - 10 * 60000) || startLog) : null;
+            let recentBreakMin = (prevLog && lastLog) ? getBreakMin(prevLog.ts, lastLog.ts) : 0;
+            let recentTimeHrs = (prevLog && lastLog && lastLog.ts > prevLog.ts) ? (lastLog.ts - prevLog.ts - recentBreakMin * 60000) / 3600000 : 0;
+            let recentRate = (recentTimeHrs > 0) ? (prevLog.rem - lastLog.rem) / recentTimeHrs : 0;
+
+            let cumulativeTarget = 0;
+            const totalJobCount = job.centerConfigs.reduce((s, c) => s + c.count, 0);
+            const totalProcessed = lastLog ? (totalJobCount - lastLog.rem) : 0;
+
+            let prevCumulative = 0;
+            for (let c of job.centerConfigs) {
+                if (c.count === 0) continue;
+                cumulativeTarget += c.count;
+                const limitDate = getLimitDate(c.limit);
+                const needed = Math.max(0, cumulativeTarget - totalProcessed);
+                const isFinished = job.started && needed <= 0;
+                const hrsLeft = (limitDate.getTime() - nowTs) / 3600000;
+                let reqRate = (job.started && !isFinished) ? (hrsLeft > 0 ? Math.ceil(needed / hrsLeft) : "OVER") : "--";
+                let eta = "--:--", etaR = "--:--", isNg = false, isNgR = false;
+
+                // 進捗バーの計算（前の拠点が終わるまで次が始まらない逐次計算）
+                const processedForThisCenter = Math.max(0, Math.min(c.count, totalProcessed - prevCumulative));
+                const progress = c.count > 0 ? Math.round((processedForThisCenter / c.count) * 100) : 0;
+                prevCumulative = cumulativeTarget;
+
+                if (avgRate > 0 && !isFinished && lastLog) {
+                    const fTs = lastLog.ts + (needed / avgRate) * 3600000;
+                    eta = fmtTime(fTs); if (fTs > limitDate.getTime()) isNg = true;
+                }
+                if (recentRate > 0 && !isFinished && lastLog) {
+                    const fTsR = lastLog.ts + (needed / recentRate) * 3600000;
+                    etaR = fmtTime(fTsR); if (fTsR > limitDate.getTime()) isNgR = true;
+                }
+                tbody.insertAdjacentHTML('beforeend', `<tr class="${isFinished ? 'finished' : ''}">
                 <td style="font-weight:bold">${c.name}<div class="progress-container"><div class="progress-fill" style="width:${progress}%"></div></div></td>
-                <td>${c.limit}</td><td>${job.baseRate?fmtTime(limitDate.getTime()-(cumulativeTarget/job.baseRate)*3600000):'--'}</td><td>${c.count}</td>
-                <td style="color:var(--blue); font-weight:bold; font-size:11px;">${isFinished?'完了':needed}</td>
-                <td style="background:#fff5eb; color:var(--orange); font-weight:bold; font-size:10px;">${isFinished?'-':reqRate}</td>
+                <td>${c.limit}</td><td>${job.baseRate ? fmtTime(limitDate.getTime() - (cumulativeTarget / job.baseRate) * 3600000) : '--'}</td><td>${c.count}</td>
+                <td style="color:var(--blue); font-weight:bold; font-size:11px;">${isFinished ? '完了' : needed}</td>
+                <td style="background:#fff5eb; color:var(--orange); font-weight:bold; font-size:10px;">${isFinished ? '-' : reqRate}</td>
                 <td style="font-size:8px; text-align:center; white-space:nowrap;">
-                    ${isFinished ? '✅' : `<span style="${isNg?'color:red;':''}">全:${eta}</span><span style="color:#ccc">/</span><span style="${isNgR?'color:red;font-weight:bold;':''}">直:${etaR}</span>`}
+                    ${isFinished ? '✅' : `<span style="${isNg ? 'color:red;' : ''}">全:${eta}</span><span style="color:#ccc">/</span><span style="${isNgR ? 'color:red;font-weight:bold;' : ''}">直:${etaR}</span>`}
                 </td>
-                <td style="font-size:8px;">${isFinished?'OK':(isNg || isNgR ? '<span style="color:red;font-weight:bold;">NG</span>' : 'OK')}</td></tr>`);
+                <td style="font-size:8px;">${isFinished ? 'OK' : (isNg || isNgR ? '<span style="color:red;font-weight:bold;">NG</span>' : 'OK')}</td></tr>`);
+            }
+            if (job.started) renderLogs(id, avgRate, recentRate);
         }
-        if (job.started) renderLogs(id, avgRate, recentRate);
-    }
-    function renderJob(id) {
-        const job = jobs[id]; const lastLog = job.logs[job.logs.length-1];
-        const html = `<div class="card ${job.isOpen ? 'open' : ''}" id="${id}">
+        function renderJob(id) {
+            const job = jobs[id]; const lastLog = job.logs[job.logs.length - 1];
+            const html = `<div class="card ${job.isOpen ? 'open' : ''}" id="${id}">
             <div class="card-header" onclick="toggleCard(event, '${id}')">
                 <div><span class="item-name" onclick="event.stopPropagation(); editItemName('${id}')">${job.name}</span><span class="base-rate-tag" onclick="event.stopPropagation(); editBaseRate('${id}')">基準: ${job.baseRate}/h</span></div>
-                <span style="font-weight:bold; font-size:10px;">${job.started && lastLog ? '残:'+lastLog.rem : '<span style="color:red">未開始</span>'} ▼</span>
+                <span style="font-weight:bold; font-size:10px;">${job.started && lastLog ? '残:' + lastLog.rem : '<span style="color:red">未開始</span>'} ▼</span>
             </div>
             <div class="card-content">
                 <button class="btn-support" onclick="addSupportCenter('${id}')">＋ 応援追加</button>
@@ -405,39 +786,66 @@ function editItemName(id) {
                     <thead><tr><th>先</th><th>門限</th><th>開始</th><th>設定</th><th>あと</th><th>必要時速</th><th>予測</th><th>判</th></tr></thead>
                     <tbody id="${id}-body"></tbody>
                 </table>
-                ${!job.started ? `<button onclick="startJob('${id}')" style="width:100%; padding:10px; background:var(--success); color:white; border:none; border-radius:3px; font-weight:bold; font-size:11px;">製造開始</button>` : 
+                ${!job.started ? `<button onclick="startJob('${id}')" style="width:100%; padding:10px; background:var(--success); color:white; border:none; border-radius:3px; font-weight:bold; font-size:11px;">${job.centerConfigs.length === 0 ? '設定して開始' : '製造開始'}</button>` :
                     `<div class="main-controls">
                         <input type="number" id="${id}-in" class="prod-input" placeholder="残数" onfocus="this.select()" onkeydown="if(event.key==='Enter')record('${id}')">
-                        <button class="btn-rec" onclick="record('${id}')">記録</button>
+                        <div style="display:flex; gap:2px; grid-column: 2 / 3;">
+                            <button class="btn-rec" onclick="record('${id}')">記録</button>
+                            <button class="btn-break" onclick="addBreak('${id}')">休</button>
+                        </div>
                         <div class="info-box"><span style="font-size:7px;color:#868e96">生産性(全体)</span><span id="${id}-avg" style="font-weight:bold; font-size:11px;">--</span></div>
-                        <div class="info-box"><span style="font-size:7px;color:#868e96">生産性(30分)</span><span id="${id}-recent" style="font-weight:bold; font-size:11px;">--</span></div>
+                        <div class="info-box"><span style="font-size:7px;color:#868e96">生産性(10分)</span><span id="${id}-recent" style="font-weight:bold; font-size:11px;">--</span></div>
                     </div><table class="log-table" id="${id}-logTable"></table>`}
                 <button onclick="deleteJob('${id}')" class="btn-del-job">アイテム削除</button>
             </div></div>`;
-        document.getElementById('jobContainer').insertAdjacentHTML('beforeend', html);
-        refreshTable(id);
-    }
-    function renderLogs(id, avgRate, recentRate) {
-        const job = jobs[id]; const table = document.getElementById(id + '-logTable'); if(!table) return;
-        const avgEl = document.getElementById(id + '-avg'); if(avgEl) avgEl.innerText = (Math.round(avgRate) || "--") + " 食/h";
-        const recentEl = document.getElementById(id + '-recent'); if(recentEl) recentEl.innerText = (Math.round(recentRate) || "--") + " 食/h";
-        table.innerHTML = "<tr><th>時刻</th><th>残数</th><th>生産性</th><th></th></tr>";
-        job.logs.slice().reverse().forEach((log, i) => {
-            const idx = job.logs.length-1-i; let r = "-";
-            if (idx > 0) { const h = (job.logs[idx].ts - job.logs[idx-1].ts)/3600000; r = h>0?(Math.round((job.logs[idx-1].rem - job.logs[idx].rem)/h) + " 食/h"):"0 食/h"; }
-            table.insertAdjacentHTML('beforeend', `<tr>
-                <td class="editable" onclick="editLog('${id}',${idx},'ts')">${fmtTime(log.ts)}</td>
-                <td class="editable" onclick="editLog('${id}',${idx},'rem')">${log.rem}</td>
-                <td>${r}</td><td><button onclick="deleteLog('${id}',${idx})" style="border:none;background:none;color:#ccc;font-size:10px;">×</button></td></tr>`);
-        });
-    }
-    function record(id) { const i = document.getElementById(id + '-in'); if(!i.value) return; jobs[id].logs.push({ rem: Number(i.value), ts: getNow().getTime() }); save(); refreshAll(); }
-    function refreshAll() { document.getElementById('jobContainer').innerHTML = ""; for(let id in jobs) renderJob(id); }
-    function toggleCard(event, id) { jobs[id].isOpen = !jobs[id].isOpen; save(); document.getElementById(id).classList.toggle('open'); }
-    function deleteLog(id, i) { if(confirm("消去？")) { jobs[id].logs.splice(i,1); save(); refreshAll(); } }
-    function deleteJob(id) { if(confirm("削除？")) { delete jobs[id]; save(); refreshAll(); } }
-    function resetAll() { if(confirm("全消去？")) { localStorage.clear(); location.reload(); } }
-    window.onload = () => { updateUI(); setInterval(() => { for(let id in jobs) if(jobs[id].isOpen) refreshTable(id); }, 30000); };
-</script>
+            document.getElementById('jobContainer').insertAdjacentHTML('beforeend', html);
+            refreshTable(id);
+        }
+        function renderLogs(id, avgRate, recentRate) {
+            const job = jobs[id]; const table = document.getElementById(id + '-logTable'); if (!table) return;
+            const avgEl = document.getElementById(id + '-avg'); if (avgEl) avgEl.innerText = (Math.round(avgRate) || "--") + " 食/h";
+            const recentEl = document.getElementById(id + '-recent'); if (recentEl) recentEl.innerText = (Math.round(recentRate) || "--") + " 食/h";
+            table.innerHTML = "<tr><th>時刻</th><th>残数</th><th>生産性</th><th></th></tr>";
+            job.logs.slice().reverse().forEach((log, i) => {
+                const idx = job.logs.length - 1 - i; let r = "-";
+                if (log.isBreak) {
+                    table.insertAdjacentHTML('beforeend', `<tr style="background:#fff5f5">
+                    <td class="editable" onclick="editLog('${id}',${idx},'ts')">${fmtTime(log.ts)}</td>
+                    <td class="editable" onclick="editLog('${id}',${idx},'duration')">休:${log.duration}分</td>
+                    <td>-</td><td><button onclick="deleteLog('${id}',${idx})" style="border:none;background:none;color:#ccc;font-size:10px;">×</button></td></tr>`);
+                } else {
+                    if (idx > 0) {
+                        // 前のログとの間にある休憩時間を引く
+                        const bMin = job.logs.filter(l => l.isBreak && l.ts > job.logs[idx - 1].ts && l.ts <= job.logs[idx].ts).reduce((s, l) => s + (l.duration || 0), 0);
+                        const h = (job.logs[idx].ts - job.logs[idx - 1].ts - bMin * 60000) / 3600000;
+                        r = h > 0 ? (Math.round((job.logs[idx - 1].rem - job.logs[idx].rem) / h) + " 食/h") : "0 食/h";
+                    }
+                    table.insertAdjacentHTML('beforeend', `<tr>
+                    <td class="editable" onclick="editLog('${id}',${idx},'ts')">${fmtTime(log.ts)}</td>
+                    <td class="editable" onclick="editLog('${id}',${idx},'rem')">${log.rem}</td>
+                    <td>${r}</td><td><button onclick="deleteLog('${id}',${idx})" style="border:none;background:none;color:#ccc;font-size:10px;">×</button></td></tr>`);
+                }
+            });
+        }
+        function record(id) { const i = document.getElementById(id + '-in'); if (!i.value) return; jobs[id].logs.push({ rem: Number(i.value), ts: getNow().getTime() }); save(); refreshAll(); }
+        function refreshAll() { document.getElementById('jobContainer').innerHTML = ""; for (let id in jobs) renderJob(id); }
+        function toggleCard(event, id) { jobs[id].isOpen = !jobs[id].isOpen; save(); document.getElementById(id).classList.toggle('open'); }
+        function deleteLog(id, i) { if (confirm("消去？")) { jobs[id].logs.splice(i, 1); save(); refreshAll(); } }
+        function deleteJob(id) { if (confirm("削除？")) { delete jobs[id]; save(); refreshAll(); } }
+        function resetAll() { if (confirm("完全消去（全アイテム含むすべて）しますか？")) { localStorage.clear(); location.reload(); } }
+        function resetRecordsOnly() {
+            if (confirm("全アイテムを初期化（名前以外をリセット）しますか？")) {
+                for (let id in jobs) {
+                    jobs[id].baseRate = 0;
+                    jobs[id].centerConfigs = [];
+                    jobs[id].started = false;
+                    jobs[id].logs = [];
+                }
+                save(); refreshAll();
+            }
+        }
+        window.onload = () => { updateUI(); setInterval(() => { for (let id in jobs) if (jobs[id].isOpen) refreshTable(id); }, 30000); };
+    </script>
 </body>
+
 </html>
