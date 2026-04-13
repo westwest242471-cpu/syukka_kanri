@@ -28,9 +28,17 @@
         .base-rate-tag { font-size: 9px; color: #666; background: #eee; padding: 1px 4px; border-radius: 3px; margin-left: 5px; cursor: pointer; text-decoration: underline; }
         .card-content { display: none; padding: 4px; border-top: 1px solid #eee; }
         .card.open .card-content { display: block; }
-        .status-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 4px; }
-        .status-table th { background: #f4f4f4; font-size: 7px; padding: 2px 1px; border: 1px solid #ddd; }
-        .status-table td { border: 1px solid #ddd; padding: 2px 1px; text-align: center; font-size: 10px; }
+        .status-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 4px; word-break: break-all; }
+        .status-table th { background: #f4f4f4; font-size: 7px; padding: 1px 0; border: 1px solid #ddd; }
+        .status-table td { border: 1px solid #ddd; padding: 2px 0; text-align: center; font-size: 9px; line-height: 1.2; }
+        .status-table th:nth-child(1) { width: 15%; } /* 先 */
+        .status-table th:nth-child(2) { width: 10%; } /* 門限 */
+        .status-table th:nth-child(3) { width: 10%; } /* 開始 */
+        .status-table th:nth-child(4) { width: 9%; }  /* 設定 */
+        .status-table th:nth-child(5) { width: 9%; }  /* あと */
+        .status-table th:nth-child(6) { width: 11%; } /* 必要時速 */
+        .status-table th:nth-child(7) { width: 30%; } /* 予測 */
+        .status-table th:nth-child(8) { width: 6%; }  /* 判 */
         .finished { background: #e8f5e9 !important; color: #aaa !important; }
         .main-controls { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; margin: 4px 0; }
         .prod-input { width: 100%; border: 1.5px solid var(--blue); border-radius: 3px; font-size: 14px; font-weight: bold; text-align: center; box-sizing: border-box; height: 30px; }
@@ -42,6 +50,16 @@
         .log-table td { border: 1px solid #ddd; padding: 2px; text-align: center; }
         .editable { color: var(--blue); text-decoration: underline; }
         .btn-del-job { width:100%; background:none; border:none; color:#ccc; font-size:9px; margin-top:5px; padding: 5px; }
+        
+        /* 修正・追加分 */
+        .progress-container { width: 100%; height: 3px; background: #eee; border-radius: 2px; margin-top: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--success); transition: width 0.3s ease; }
+        .settings-btn { background: none; border: none; color: white; cursor: pointer; font-size: 14px; padding: 2px 5px; }
+        .config-form { font-size: 11px; max-height: 300px; overflow-y: auto; }
+        .config-group { margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        .config-row { display: flex; gap: 4px; align-items: center; margin-bottom: 2px; }
+        .config-row label { flex: 1; }
+        .config-row input { width: 50px; font-size: 11px; padding: 2px; border: 1px solid #ccc; border-radius: 2px; }
         
         /* デベロッパー表記用スタイル */
         footer { margin-top: auto; padding: 15px 5px; text-align: center; color: #bbb; font-size: 8px; }
@@ -69,7 +87,10 @@
 <div id="testBanner" class="test-banner"></div>
 
 <div style="background: var(--dark); color: white; padding: 4px; display: flex; justify-content: space-between; align-items: center;">
-    <span style="font-weight:bold; font-size: 11px;">出荷管理</span>
+    <div>
+        <span style="font-weight:bold; font-size: 11px;">出荷管理</span>
+        <button onclick="openSettings()" class="settings-btn" title="設定">⚙️</button>
+    </div>
     <div>
         <label style="font-size: 8px; cursor: pointer; background: #555; padding: 1px 4px; border-radius: 2px; margin-right: 4px;">
             <input type="checkbox" id="testModeToggle" onchange="toggleTestMode()"> テスト
@@ -88,7 +109,7 @@
 <div id="jobContainer"></div>
 
 <footer>
-    Developer: 1F加工西 | App Version: 19.1 (Stable)
+    Developer: 1F加工西 | App Version: 19.3 (Stable)
 </footer>
 
 <script>
@@ -113,11 +134,32 @@
         });
     }
 
-    const BIN_CONFIGS = {
+    /* 初期設定 */
+    const DEFAULT_CONFIGS = {
         'N': { start: "21:00", limits: { "立川":"04:00", "川口":"04:20", "練馬":"05:00", "朝霞":"06:00" } },
         'Y': { start: "05:00", limits: { "立川":"10:50", "川口":"11:20", "練馬":"12:20", "朝霞":"13:00" } },
         'F': { start: "11:00", limits: { "立川":"17:00", "川口":"17:30", "練馬":"18:20", "朝霞":"20:00" } }
     };
+    let BIN_CONFIGS = JSON.parse(localStorage.getItem('ship_v19_configs')) || DEFAULT_CONFIGS;
+
+    function saveConfigs() {
+        localStorage.setItem('ship_v19_configs', JSON.stringify(BIN_CONFIGS));
+    }
+
+    function openSettings() {
+        let html = '<div class="config-form">';
+        ['N', 'Y', 'F'].forEach(mode => {
+            html += `<div class="config-group"><strong>${mode}便</strong> (開始: <input type="text" value="${BIN_CONFIGS[mode].start}" onchange="BIN_CONFIGS['${mode}'].start=this.value;saveConfigs()">)`;
+            Object.keys(BIN_CONFIGS[mode].limits).forEach(center => {
+                html += `<div class="config-row"><label>${center}</label> 門限:<input type="text" value="${BIN_CONFIGS[mode].limits[center]}" onchange="BIN_CONFIGS['${mode}'].limits['${center}']=this.value;saveConfigs()"></div>`;
+            });
+            html += '</div>';
+        });
+        html += '</div><p style="font-size:8px;color:red;">※門限形式は HH:MM。変更後は新規登録の際に反映されます。</p>';
+        openModal("便・門限設定", "html", "", () => { updateUI(); });
+        document.getElementById('modalInput').style.display = 'none';
+        document.getElementById('modalTitle').insertAdjacentHTML('afterend', `<div id="configContainer" style="margin-bottom:10px;">${html}</div>`);
+    }
 
     let currentBin = localStorage.getItem('ship_v18_bin') || 'N';
     let jobs = JSON.parse(localStorage.getItem(`ship_v18_data_${currentBin}`)) || {};
@@ -127,10 +169,19 @@
 
     let modalCallback = null;
     function openModal(title, type, defVal, callback, isConfirm = false) {
+        // モーダルの状態をリセット
+        const cfg = document.getElementById('configContainer');
+        if (cfg) cfg.remove();
+        document.getElementById('modalInput').style.display = isConfirm ? 'none' : 'block';
+        document.getElementById('modalOk').onclick = () => {
+            const val = document.getElementById('modalInput').value;
+            document.getElementById('customModal').style.display = 'none';
+            if (modalCallback) modalCallback(val);
+        };
+
         document.getElementById('modalTitle').innerText = title;
         const input = document.getElementById('modalInput');
         input.type = type; input.value = defVal;
-        input.style.display = isConfirm ? 'none' : 'block';
         document.getElementById('modalBtnsNormal').style.display = isConfirm ? 'none' : 'flex';
         document.getElementById('modalBtnsConfirm').style.display = isConfirm ? 'flex' : 'none';
         document.getElementById('customModal').style.display = 'flex';
@@ -293,11 +344,19 @@ function editItemName(id) {
         const job = jobs[id]; const tbody = document.getElementById(id + '-body'); if (!tbody) return;
         tbody.innerHTML = "";
         const nowTs = getNow().getTime();
-        const lastLog = job.logs[job.logs.length-1];
-        const startLog = job.logs[0];
+        const lastLog = job.logs.length > 0 ? job.logs[job.logs.length-1] : null;
+        const startLog = job.logs.length > 0 ? job.logs[0] : null;
+        
+        // 生産性計算（全体平均と直近30分）
         let avgRate = (startLog && lastLog && lastLog.ts > startLog.ts) ? (startLog.rem - lastLog.rem) / ((lastLog.ts - startLog.ts) / 3600000) : 0;
+        let recentLog = lastLog ? (job.logs.find(l => l.ts >= nowTs - 30 * 60000) || startLog) : null;
+        let recentRate = (recentLog && lastLog && lastLog.ts > recentLog.ts) ? (recentLog.rem - lastLog.rem) / ((lastLog.ts - recentLog.ts) / 3600000) : 0;
+
         let cumulativeTarget = 0;
-        const totalProcessed = lastLog ? (job.centerConfigs.reduce((s,c)=>s+c.count,0) - lastLog.rem) : 0;
+        const totalJobCount = job.centerConfigs.reduce((s,c)=>s+c.count,0);
+        const totalProcessed = lastLog ? (totalJobCount - lastLog.rem) : 0;
+        
+        let prevCumulative = 0;
         for (let c of job.centerConfigs) {
             if (c.count === 0) continue;
             cumulativeTarget += c.count;
@@ -306,18 +365,32 @@ function editItemName(id) {
             const isFinished = job.started && needed <= 0;
             const hrsLeft = (limitDate.getTime() - nowTs) / 3600000;
             let reqRate = (job.started && !isFinished) ? (hrsLeft > 0 ? Math.ceil(needed / hrsLeft) : "OVER") : "--";
-            let eta = "--:--", isNg = false;
+            let eta = "--:--", etaR = "--:--", isNg = false, isNgR = false;
+            
+            // 進捗バーの計算（前の拠点が終わるまで次が始まらない逐次計算）
+            const processedForThisCenter = Math.max(0, Math.min(c.count, totalProcessed - prevCumulative));
+            const progress = c.count > 0 ? Math.round((processedForThisCenter / c.count) * 100) : 0;
+            prevCumulative = cumulativeTarget;
+
             if (avgRate > 0 && !isFinished && lastLog) {
                 const fTs = lastLog.ts + (needed / avgRate) * 3600000;
                 eta = fmtTime(fTs); if (fTs > limitDate.getTime()) isNg = true;
             }
+            if (recentRate > 0 && !isFinished && lastLog) {
+                const fTsR = lastLog.ts + (needed / recentRate) * 3600000;
+                etaR = fmtTime(fTsR); if (fTsR > limitDate.getTime()) isNgR = true;
+            }
             tbody.insertAdjacentHTML('beforeend', `<tr class="${isFinished ? 'finished' : ''}">
-                <td style="font-weight:bold">${c.name}</td><td>${c.limit}</td><td>${job.baseRate?fmtTime(limitDate.getTime()-(cumulativeTarget/job.baseRate)*3600000):'--'}</td><td>${c.count}</td>
-                <td style="color:var(--blue); font-weight:bold; font-size:12px;">${isFinished?'完了':needed}</td>
-                <td style="background:#fff5eb; color:var(--orange); font-weight:bold; font-size:12px;">${isFinished?'-':reqRate}</td>
-                <td style="${isNg?'color:red;font-weight:bold;':''}">${isFinished?'✅':eta}</td><td>${isFinished?'OK':(isNg?'⚠️':'OK')}</td></tr>`);
+                <td style="font-weight:bold">${c.name}<div class="progress-container"><div class="progress-fill" style="width:${progress}%"></div></div></td>
+                <td>${c.limit}</td><td>${job.baseRate?fmtTime(limitDate.getTime()-(cumulativeTarget/job.baseRate)*3600000):'--'}</td><td>${c.count}</td>
+                <td style="color:var(--blue); font-weight:bold; font-size:11px;">${isFinished?'完了':needed}</td>
+                <td style="background:#fff5eb; color:var(--orange); font-weight:bold; font-size:10px;">${isFinished?'-':reqRate}</td>
+                <td style="font-size:8px; text-align:center; white-space:nowrap;">
+                    ${isFinished ? '✅' : `<span style="${isNg?'color:red;':''}">全:${eta}</span><span style="color:#ccc">/</span><span style="${isNgR?'color:red;font-weight:bold;':''}">直:${etaR}</span>`}
+                </td>
+                <td style="font-size:8px;">${isFinished?'OK':(isNg || isNgR ? '<span style="color:red;font-weight:bold;">NG</span>' : 'OK')}</td></tr>`);
         }
-        if (job.started) renderLogs(id, avgRate);
+        if (job.started) renderLogs(id, avgRate, recentRate);
     }
     function renderJob(id) {
         const job = jobs[id]; const lastLog = job.logs[job.logs.length-1];
@@ -336,17 +409,18 @@ function editItemName(id) {
                     `<div class="main-controls">
                         <input type="number" id="${id}-in" class="prod-input" placeholder="残数" onfocus="this.select()" onkeydown="if(event.key==='Enter')record('${id}')">
                         <button class="btn-rec" onclick="record('${id}')">記録</button>
-                        <div class="info-box"><span style="font-size:7px;color:#868e96">平均生産性</span><span id="${id}-avg" style="font-weight:bold; font-size:11px;">--</span></div>
-                        <div class="info-box"><span style="font-size:7px;color:#868e96">現在</span><span style="font-weight:bold; font-size:10px;">${fmtTime(getNow())}</span></div>
+                        <div class="info-box"><span style="font-size:7px;color:#868e96">生産性(全体)</span><span id="${id}-avg" style="font-weight:bold; font-size:11px;">--</span></div>
+                        <div class="info-box"><span style="font-size:7px;color:#868e96">生産性(30分)</span><span id="${id}-recent" style="font-weight:bold; font-size:11px;">--</span></div>
                     </div><table class="log-table" id="${id}-logTable"></table>`}
                 <button onclick="deleteJob('${id}')" class="btn-del-job">アイテム削除</button>
             </div></div>`;
         document.getElementById('jobContainer').insertAdjacentHTML('beforeend', html);
         refreshTable(id);
     }
-    function renderLogs(id, avgRate) {
+    function renderLogs(id, avgRate, recentRate) {
         const job = jobs[id]; const table = document.getElementById(id + '-logTable'); if(!table) return;
         const avgEl = document.getElementById(id + '-avg'); if(avgEl) avgEl.innerText = (Math.round(avgRate) || "--") + " 食/h";
+        const recentEl = document.getElementById(id + '-recent'); if(recentEl) recentEl.innerText = (Math.round(recentRate) || "--") + " 食/h";
         table.innerHTML = "<tr><th>時刻</th><th>残数</th><th>生産性</th><th></th></tr>";
         job.logs.slice().reverse().forEach((log, i) => {
             const idx = job.logs.length-1-i; let r = "-";
