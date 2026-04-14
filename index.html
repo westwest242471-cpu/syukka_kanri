@@ -444,6 +444,8 @@
                 style="font-size: 8px; background: var(--danger); color: white; border: none; padding: 1px 4px;">全消去</button>
             <button onclick="resetRecordsOnly()"
                 style="font-size: 8px; background: var(--orange); color: white; border: none; padding: 1px 4px; margin-left: 2px;">全リセット</button>
+            <button onclick="showHistory()"
+                style="font-size: 8px; background: var(--blue); color: white; border: none; padding: 1px 4px; margin-left: 2px;">履歴</button>
         </div>
     </div>
 
@@ -459,7 +461,7 @@
     <div id="jobContainer"></div>
 
     <footer>
-        Developer: 1F加工西 | App Version: 19.5 (Stable)
+        Developer: 1F加工西 | App Version: 19.6 (Stable)
     </footer>
 
     <script>
@@ -520,8 +522,8 @@
         let modalCallback = null;
         function openModal(title, type, defVal, callback, isConfirm = false) {
             // モーダルの状態をリセット
-            const cfg = document.getElementById('configContainer');
-            if (cfg) cfg.remove();
+            const containers = ['configContainer', 'historyListContainer'];
+            containers.forEach(c => { const el = document.getElementById(c); if (el) el.remove(); });
             document.getElementById('modalInput').style.display = isConfirm ? 'none' : 'block';
             document.getElementById('modalOk').onclick = () => {
                 const val = document.getElementById('modalInput').value;
@@ -834,7 +836,8 @@
         function deleteJob(id) { if (confirm("削除？")) { delete jobs[id]; save(); refreshAll(); } }
         function resetAll() { if (confirm("完全消去（全アイテム含むすべて）しますか？")) { localStorage.clear(); location.reload(); } }
         function resetRecordsOnly() {
-            if (confirm("全アイテムを初期化（名前以外をリセット）しますか？")) {
+            if (confirm("全アイテムを初期化し、日報として履歴に保存しますか？")) {
+                archiveDailyReport();
                 for (let id in jobs) {
                     jobs[id].baseRate = 0;
                     jobs[id].centerConfigs = [];
@@ -842,6 +845,108 @@
                     jobs[id].logs = [];
                 }
                 save(); refreshAll();
+            }
+        }
+        function archiveDailyReport() {
+            let history = JSON.parse(localStorage.getItem('ship_v19_history')) || [];
+            let reportItems = [];
+            let totalProcessed = 0;
+            for (let id in jobs) {
+                let job = jobs[id];
+                if (!job.started || job.logs.length === 0) continue;
+                let startLog = job.logs[0];
+                let lastLog = job.logs[job.logs.length - 1];
+                let processed = startLog.rem - lastLog.rem;
+                const getBreakMin = (rangeStart, rangeEnd) => {
+                    return job.logs.filter(l => l.isBreak && l.ts > rangeStart && l.ts <= rangeEnd).reduce((s, l) => s + (l.duration || 0), 0);
+                };
+                let breakMin = getBreakMin(startLog.ts, lastLog.ts);
+                let timeHrs = (lastLog.ts - startLog.ts - breakMin * 60000) / 3600000;
+                let rate = timeHrs > 0 ? Math.round(processed / timeHrs) : 0;
+                
+                // センター別詳細の保存
+                let centerDetails = [];
+                let cumulative = 0;
+                job.centerConfigs.forEach(c => {
+                    if (c.count === 0) return;
+                    cumulative += c.count;
+                    const limitDate = getLimitDate(c.limit);
+                    const startTimeTarget = job.baseRate ? fmtTime(limitDate.getTime() - (cumulative / job.baseRate) * 3600000) : '--';
+                    centerDetails.push({ name: c.name, limit: c.limit, count: c.count, startTimeTarget });
+                });
+
+                reportItems.push({ name: job.name, processed, rate, baseRate: job.baseRate, centerDetails });
+                totalProcessed += processed;
+            }
+            if (reportItems.length === 0) return;
+            let report = { id: Date.now(), date: getNow().toLocaleDateString('ja-JP'), bin: currentBin, totalProcessed: totalProcessed, items: reportItems };
+            history.unshift(report);
+            if (history.length > 30) history.pop();
+            localStorage.setItem('ship_v19_history', JSON.stringify(history));
+        }
+        function showHistory() {
+            let history = JSON.parse(localStorage.getItem('ship_v19_history')) || [];
+            let html = '<div style="max-height:350px; overflow-y:auto; font-size:10px; border-top:1px solid #eee; padding-top:5px;">';
+            if (history.length === 0) {
+                html += '<p style="text-align:center;color:#999;padding:20px 0;">履歴はありません</p>';
+            } else {
+                history.forEach(h => {
+                    html += `<div style="border-bottom:1px solid #eee; padding:8px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong style="color:var(--blue); font-size:11px;">${h.date} (${h.bin})</strong>
+                            <div>
+                                <button onclick="editHistoryDate(${h.id})" style="font-size:9px; padding:2px 4px; border:1px solid #ccc; border-radius:2px; background:#fff;">日付</button>
+                                <button onclick="deleteHistory(${h.id})" style="font-size:9px; padding:2px 4px; background:var(--danger); color:white; border:none; border-radius:2px; margin-left:4px;">消去</button>
+                            </div>
+                        </div>
+                        <div style="color:#555; line-height:1.4; margin-top:3px;">
+                            <strong>合計: ${h.totalProcessed} 食</strong>
+                            ${h.items.map(it => `
+                                <div style="background:#f9f9f9; padding:4px; margin-top:4px; border-radius:2px;">
+                                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:9px; border-bottom:1px solid #ddd; padding-bottom:2px;">
+                                        <span>${it.name}</span>
+                                        <span>製造: ${it.processed}食 (${it.rate}/h)</span>
+                                    </div>
+                                    <table style="width:100%; border-collapse:collapse; font-size:8px; margin-top:2px;">
+                                        <tr style="background:#eee; color:#666;"><th style="border:1px solid #ddd; padding:1px;">先</th><th style="border:1px solid #ddd; padding:1px;">門限</th><th style="border:1px solid #ddd; padding:1px;">開始</th><th style="border:1px solid #ddd; padding:1px;">設定</th></tr>
+                                        ${(it.centerDetails || []).map(c => `
+                                            <tr>
+                                                <td style="border:1px solid #ddd; padding:1px; text-align:center; font-weight:bold;">${c.name}</td>
+                                                <td style="border:1px solid #ddd; padding:1px; text-align:center;">${c.limit}</td>
+                                                <td style="border:1px solid #ddd; padding:1px; text-align:center;">${c.startTimeTarget}</td>
+                                                <td style="border:1px solid #ddd; padding:1px; text-align:center;">${c.count}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </table>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>`;
+                });
+            }
+            html += '</div>';
+            openModal("日次日報履歴(直近30件)", "html", "", () => {});
+            document.getElementById('modalInput').style.display = 'none';
+            document.getElementById('modalTitle').insertAdjacentHTML('afterend', `<div id="historyListContainer">${html}</div>`);
+        }
+        function editHistoryDate(reportId) {
+            let history = JSON.parse(localStorage.getItem('ship_v19_history')) || [];
+            let report = history.find(h => h.id === reportId);
+            if (!report) return;
+            openModal("日付編集", "text", report.date, (newDate) => {
+                if (newDate) {
+                    report.date = newDate;
+                    localStorage.setItem('ship_v19_history', JSON.stringify(history));
+                    showHistory();
+                }
+            });
+        }
+        function deleteHistory(reportId) {
+            if (confirm("この履歴を消去しますか？")) {
+                let history = JSON.parse(localStorage.getItem('ship_v19_history')) || [];
+                history = history.filter(h => h.id !== reportId);
+                localStorage.setItem('ship_v19_history', JSON.stringify(history));
+                showHistory();
             }
         }
         window.onload = () => { updateUI(); setInterval(() => { for (let id in jobs) if (jobs[id].isOpen) refreshTable(id); }, 30000); };
