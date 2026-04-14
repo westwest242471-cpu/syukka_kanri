@@ -875,7 +875,21 @@
                     centerDetails.push({ name: c.name, limit: c.limit, count: c.count, startTimeTarget });
                 });
 
-                reportItems.push({ name: job.name, processed, rate, baseRate: job.baseRate, centerDetails });
+                // 記録履歴（ログ）の保存
+                let logDetails = job.logs.map((log, lIdx) => {
+                    let r = "-";
+                    if (!log.isBreak && lIdx > 0) {
+                        let prevLog = job.logs.slice(0, lIdx).reverse().find(l => !l.isBreak);
+                        if (prevLog) {
+                            const bMin = job.logs.filter(l => l.isBreak && l.ts > prevLog.ts && l.ts <= log.ts).reduce((s, l) => s + (l.duration || 0), 0);
+                            const h = (log.ts - prevLog.ts - bMin * 60000) / 3600000;
+                            r = h > 0 ? (Math.round((prevLog.rem - log.rem) / h) + " 食/h") : "0 食/h";
+                        }
+                    }
+                    return { ts: log.ts, rem: log.rem, rate: r, isBreak: log.isBreak, duration: log.duration };
+                });
+
+                reportItems.push({ name: job.name, processed, rate, baseRate: job.baseRate, centerDetails, logDetails });
                 totalProcessed += processed;
             }
             if (reportItems.length === 0) return;
@@ -915,6 +929,16 @@
                                                 <td style="border:1px solid #ddd; padding:1px; text-align:center;">${c.limit}</td>
                                                 <td style="border:1px solid #ddd; padding:1px; text-align:center;">${c.startTimeTarget}</td>
                                                 <td style="border:1px solid #ddd; padding:1px; text-align:center;">${c.count}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </table>
+                                    <table style="width:100%; border-collapse:collapse; font-size:8px; margin-top:4px; border-top:1px dashed #ddd;">
+                                        <tr style="color:#888;"><th style="padding:1px; text-align:left;">時刻</th><th style="padding:1px;">残数/休憩</th><th style="padding:1px; text-align:right;">生産性</th></tr>
+                                        ${(it.logDetails || []).map(l => `
+                                            <tr>
+                                                <td style="padding:1px; color:#888;">${fmtTime(l.ts)}</td>
+                                                <td style="padding:1px; text-align:center; ${l.isBreak ? 'color:var(--orange);' : ''}">${l.isBreak ? '休:' + l.duration + '分' : l.rem}</td>
+                                                <td style="padding:1px; text-align:right; color:#888;">${l.rate}</td>
                                             </tr>
                                         `).join('')}
                                     </table>
