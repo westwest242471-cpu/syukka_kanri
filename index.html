@@ -267,7 +267,7 @@
             color: white;
             border: none;
             border-radius: 3px;
-            font-weight: bold;
+            fontQ-weight: bold;
             height: 30px;
             font-size: 11px;
             flex: 5;
@@ -461,7 +461,7 @@
     <div id="jobContainer"></div>
 
     <footer>
-        Developer: 1F加工西 | App Version: 19.6 (Stable)
+        Developer: 1F加工西 | App Version: 19.7 (Stable)
     </footer>
 
     <script>
@@ -717,8 +717,8 @@
         function refreshTable(id) {
             const job = jobs[id]; const tbody = document.getElementById(id + '-body'); if (!tbody) return;
             tbody.innerHTML = "";
-            const nowTs = getNow().getTime();
             const lastLog = job.logs.length > 0 ? job.logs[job.logs.length - 1] : null;
+            const nowTs = lastLog ? lastLog.ts : getNow().getTime();
             const startLog = job.logs.length > 0 ? job.logs[0] : null;
 
             // 生産性計算（全体平均と直近10分）
@@ -973,7 +973,7 @@
                 showHistory();
             }
         }
-        window.onload = () => { updateUI(); setInterval(() => { for (let id in jobs) if (jobs[id].isOpen) refreshTable(id); }, 30000); };
+        window.onload = () => { updateUI(); };
     </script>
 </body>
 
